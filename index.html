@@ -185,6 +185,48 @@ td.num,th.num{font-family:var(--mono);text-align:right}
   body *{visibility:hidden}#reportArea,#reportArea *{visibility:visible}
   #reportArea{position:absolute;left:0;top:0;width:100%;border-radius:0;padding:10px 4px;box-shadow:none;border:none}
 }
+
+/* ---------- LIVE TODAY PANEL ---------- */
+.today-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.today-head .livebadge{display:inline-flex;align-items:center;gap:7px;background:var(--green-dim);color:var(--green);
+  font-weight:700;font-size:12px;padding:5px 12px;border-radius:20px}
+.today-head .livebadge .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+.today-head .dt{font-family:var(--mono);font-size:13px;color:var(--muted);font-weight:600}
+/* slot checkpoint strip */
+.slots-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:760px){.slots-strip{grid-template-columns:repeat(2,1fr)}}
+.slot-card{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:15px 17px;box-shadow:var(--shadow);position:relative}
+.slot-card .when{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.slot-card .qty{font-family:var(--mono);font-size:26px;font-weight:700;margin-top:6px;color:var(--ink)}
+.slot-card .cum{font-size:11.5px;color:var(--dim);margin-top:5px}
+.slot-card.total{background:linear-gradient(135deg,#1f5a96,#2f6fb0);border:none;color:#fff}
+.slot-card.total .when,.slot-card.total .cum{color:#cfe2f4}
+.slot-card.total .qty{color:#fff}
+/* live line status cards */
+.linegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.linecard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 17px;box-shadow:var(--shadow);border-left:4px solid var(--line2)}
+.linecard.on-track{border-left-color:var(--green)}
+.linecard.behind{border-left-color:var(--amber)}
+.linecard.low{border-left-color:var(--red)}
+.linecard.stopped{border-left-color:var(--red);background:#fff8f7}
+.linecard .lc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.linecard .lc-name{font-size:15px;font-weight:800}
+.linecard .lc-badge{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:3px 9px;border-radius:20px}
+.b-on-track{background:var(--green-dim);color:var(--green)}
+.b-behind{background:var(--amber-dim);color:var(--amber)}
+.b-low{background:var(--red-dim);color:var(--red)}
+.b-stopped{background:var(--red-dim);color:var(--red)}
+.linecard .lc-part{font-size:12px;color:var(--muted);margin-bottom:11px;min-height:16px}
+.linecard .lc-nums{display:flex;gap:16px;margin-bottom:11px}
+.linecard .lc-nums .n .v{font-family:var(--mono);font-size:19px;font-weight:700}
+.linecard .lc-nums .n .l{font-size:10px;text-transform:uppercase;color:var(--dim);letter-spacing:.4px}
+.linecard .lc-prog{height:7px;border-radius:4px;background:var(--line);overflow:hidden;margin-bottom:11px}
+.linecard .lc-prog i{display:block;height:100%;border-radius:4px}
+.linecard .lc-slots{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:9px;margin-bottom:9px}
+.linecard .lc-slots b{color:var(--ink)}
+.linecard .lc-stop{background:var(--red-dim);color:#9a2a22;border-radius:8px;padding:8px 10px;font-size:11.5px;font-weight:600;display:flex;gap:7px;align-items:flex-start}
+.linecard .lc-ops{font-size:11px;color:var(--dim);margin-top:9px}
+.linecard .lc-ops b{color:var(--muted);font-weight:600}
 </style>
 </head>
 <body>
@@ -233,6 +275,7 @@ td.num,th.num{font-family:var(--mono);text-align:right}
       <button data-tab="downtime" onclick="showTab(this)"><span class="ic">⚠</span>Downtime</button>
       <div class="grp">Records</div>
       <button data-tab="log" onclick="showTab(this)"><span class="ic">▥</span>Day Log</button>
+      <button data-tab="year" onclick="showTab(this)"><span class="ic">▦</span>Year View</button>
       <button data-tab="reports" onclick="showTab(this)"><span class="ic">🖶</span>Reports</button>
     </nav>
     <div class="foot">
@@ -257,7 +300,16 @@ td.num,th.num{font-family:var(--mono);text-align:right}
       <!-- OVERVIEW -->
       <section class="page active" id="overview" style="display:none">
         <div class="kpis" id="kpiRow"></div>
-        <h3 class="sect">Daily Output — Plan vs Actual</h3>
+
+        <h3 class="sect">Today — Live Status <span id="todayDateInline" style="color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0"></span></h3>
+        <div class="today-head">
+          <span class="livebadge"><span class="pulse"></span>LIVE</span>
+          <span class="dt" id="todayBadgeDate">—</span>
+        </div>
+        <div class="slots-strip" id="slotsStrip"></div>
+        <div class="linegrid" id="liveLineGrid"></div>
+
+        <h3 class="sect">Daily Output — Plan vs Actual (month)</h3>
         <div class="panel">
           <div class="hint">Side-by-side bars: grey is planned output, blue is actual. Click any day to inspect it in the Day Log.</div>
           <div class="chartbox tall"><canvas id="chDaily"></canvas></div>
@@ -269,8 +321,8 @@ td.num,th.num{font-family:var(--mono);text-align:right}
             <div class="chartbox"><canvas id="chAchieve"></canvas></div>
           </div>
           <div class="panel">
-            <h4>Output by Time Slot</h4>
-            <div class="hint">Where volume builds across the shift (12 PM / 4 PM / 7 PM checkpoints).</div>
+            <h4>Output by Time Slot (month)</h4>
+            <div class="hint">Total volume per shift checkpoint across the whole month.</div>
             <div class="chartbox"><canvas id="chSlots"></canvas></div>
           </div>
         </div>
@@ -380,6 +432,35 @@ td.num,th.num{font-family:var(--mono);text-align:right}
         </div>
       </section>
 
+      <!-- YEAR VIEW -->
+      <section class="page" id="year" style="display:none">
+        <div class="today-head" style="margin-bottom:8px">
+          <h3 class="sect" style="margin:0">Year View</h3>
+          <div class="spacer" style="flex:1"></div>
+          <select id="yearSel" onchange="loadYear(this.value)" style="background:var(--surface);border:1px solid var(--line2);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600"></select>
+        </div>
+        <div id="yearLoading" class="loading">Loading year data…</div>
+        <div id="yearBody" style="display:none">
+          <div class="kpis" id="yearKpis"></div>
+          <h3 class="sect">Monthly Output — Plan vs Actual</h3>
+          <div class="panel">
+            <div class="hint">Every month tab rolled up. Grey = plan, blue = actual.</div>
+            <div class="chartbox tall"><canvas id="chYearOut"></canvas></div>
+          </div>
+          <div class="grid2" style="margin-top:16px">
+            <div class="panel"><h4>Monthly Downtime (hours)</h4><div class="chartbox"><canvas id="chYearDown"></canvas></div></div>
+            <div class="panel"><h4>Monthly Manpower (shift-slots)</h4><div class="chartbox"><canvas id="chYearMan"></canvas></div></div>
+          </div>
+          <h3 class="sect">Month-by-month detail</h3>
+          <div class="tbl-wrap">
+            <table id="yearTbl"><thead><tr>
+              <th>Month</th><th class="num">Plan</th><th class="num">Actual</th><th>Achieve</th>
+              <th class="num">Avg/Day</th><th class="num">Down (h)</th><th class="num">Manpower</th><th class="num">Active days</th>
+            </tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </section>
+
       <!-- REPORTS -->
       <section class="page" id="reports" style="display:none">
         <h3 class="sect">Management Reports</h3>
@@ -403,29 +484,29 @@ td.num,th.num{font-family:var(--mono);text-align:right}
    API_URL          : your Apps Script /exec URL
    REFRESH_SECONDS  : how often the dashboard silently pulls fresh data.
                       Change the number below (in SECONDS). 30 = every 30s.
-   VALID_USERS      : username / password pairs allowed to sign in.
+   Logins are now checked securely in the Apps Script (.gs) — passwords are
+   never stored in this file. Manage users in the USERS map inside the .gs.
    ============================================================================ */
-const API_URL = "https://script.google.com/macros/s/AKfycbwVYwuVHIoVpKTJajpCBytCqvb3Px1XR9Cf66uiP0yz1ZenZ1lpq6XMUKBhEPOjr5io/exec";
-const REFRESH_SECONDS = 30;                 // <-- change refresh interval here (seconds)
-const VALID_USERS = {                       // <-- add / edit team logins here
-  "admin":      "shree@123",
-  "production": "magnet@2026"
-};
+const API_URL = "https://script.google.com/macros/s/AKfycbynAxsZhOjhtt0lRY2Laykeij_pBt8Vq4-dn37zrvUvqDllhsl2UqRpWbo8Rf0gi9V3/exec";
+const REFRESH_SECONDS = 10;                 // <-- change refresh interval here (seconds)
 
 /* ================== STATE ================== */
-let DATA=null, CHARTS={}, sortP={k:'actual',d:-1}, sortO={k:'shifts',d:-1}, sortL={k:'date',d:1};
+let DATA=null, YEAR_DATA=null, CHARTS={}, sortP={k:'actual',d:-1}, sortO={k:'shifts',d:-1}, sortL={k:'date',d:1};
 let curReport='monthly', refreshTimer=null, countdownTimer=null, secsLeft=REFRESH_SECONDS;
 
-/* ================== LOGIN (username + password) ================== */
+/* ================== LOGIN (username + password, verified in .gs) ================== */
 function doLogin(){
   const u=document.getElementById('user').value.trim();
   const p=document.getElementById('pass').value;
   const err=document.getElementById('loginErr'); err.textContent='';
   if(!u||!p){err.textContent='Enter username and password.';return;}
   if(API_URL.indexOf('PASTE_')===0){err.textContent='Set API_URL first (see Apps Script setup).';return;}
-  if(VALID_USERS[u.toLowerCase()] && VALID_USERS[u.toLowerCase()]===p){
-    sessionStorage.setItem('mc_user',u); enterApp();
-  } else { err.textContent='Invalid username or password.'; }
+  err.textContent='Checking…';
+  fetch(API_URL+'?action=login&user='+encodeURIComponent(u)+'&pass='+encodeURIComponent(p))
+    .then(r=>r.json()).then(d=>{
+      if(d.ok){ sessionStorage.setItem('mc_user',u); sessionStorage.setItem('mc_token',d.token||''); enterApp(); }
+      else err.textContent=d.error||'Login failed';
+    }).catch(()=>err.textContent='Cannot reach server. Check API_URL / deployment.');
 }
 document.getElementById('pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('user').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('pass').focus();});
@@ -487,7 +568,7 @@ function refresh(){ loadMonth(document.getElementById('monthSel').value); }
 const TAB_TITLES={overview:['Overview','Production monitor'],today:['Latest Day','Most recent filled day'],
   lines:['Lines','Per-line performance'],parts:['Parts','Part mix & output'],
   operators:['Operators','Operator activity'],downtime:['Downtime','Stoppages & causes'],
-  log:['Day Log','Full searchable records'],reports:['Reports','Management reports']};
+  log:['Day Log','Full searchable records'],year:['Year View','Full-year rollup'],reports:['Reports','Management reports']};
 function showTab(btn){
   document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
@@ -496,6 +577,7 @@ function showTab(btn){
   const pg=document.getElementById(id); pg.classList.add('active'); pg.style.display='block';
   document.getElementById('pageTitle').textContent=TAB_TITLES[id][0];
   document.getElementById('pageCrumb').textContent=TAB_TITLES[id][1];
+  if(id==='year' && !YEAR_DATA){ loadYear(); }
 }
 function jump(tab){ const b=document.querySelector('#nav button[data-tab="'+tab+'"]'); if(b)showTab(b); }
 
@@ -509,7 +591,7 @@ const LEG={labels:{color:'#1a2533',font:{size:12,weight:'600'},usePointStyle:tru
 
 /* ================== RENDER ALL ================== */
 function renderAll(){
-  renderKpis(); renderDaily(); renderAchieve(); renderSlots();
+  renderKpis(); renderLiveToday(); renderDaily(); renderAchieve(); renderSlots();
   renderToday(); renderLines(); renderPartsChart(); renderParts();
   renderOps(); renderDowntime(); fillLogFilters(); renderLog(); buildReport();
 }
@@ -522,13 +604,50 @@ function renderKpis(){
     {c:'green',i:'▲',l:'Total Output',v:fmt(k.totalActual),s:`avg ${fmt(k.avgPerDay)}/day · ${k.activeDays} days`},
     {c:'teal',i:'▤',l:'Lines Running',v:k.linesCount,s:'active production lines',t:'lines'},
     {c:'red',i:'⚠',l:'Downtime',v:k.downHours+'h',s:`${fmt(k.totalDownMin)} min logged`,t:'downtime'},
-    {c:'violet',i:'★',l:'Best Day',v:k.bestDay?k.bestDay.achieve+'%':'—',s:k.bestDay?k.bestDay.label:'',t:'overview'},
+    {c:'violet',i:'☖',l:'Manpower (month)',v:fmt(k.manpower),s:'shift-slots worked',t:'operators'},
     {c:'amber',i:'▼',l:'Weakest Day',v:k.worstDay?k.worstDay.achieve+'%':'—',s:k.worstDay?k.worstDay.label:'',t:'overview'},
   ];
   document.getElementById('kpiRow').innerHTML=cards.map(c=>`
     <div class="kpi ${c.t?'click':''}" ${c.t?`onclick="jump('${c.t}')"`:''}>
       <div class="top"><div class="lbl">${c.l}</div><div class="ico ic-${c.c}">${c.i}</div></div>
       <div class="val v-${c.c}">${c.v}</div><div class="sub">${c.s}</div></div>`).join('');
+}
+
+/* ----- LIVE TODAY: slot checkpoints + per-line status ----- */
+function renderLiveToday(){
+  const t=DATA.todaySlot||{by12:0,by4:0,by7:0,t12:0,t16:0,t19:0,plan:0,actual:0,down:0};
+  const dlabel=DATA.lastDate||'—';
+  document.getElementById('todayDateInline').textContent = dlabel? '· '+dlabel : '';
+  document.getElementById('todayBadgeDate').textContent = 'Latest filled: '+dlabel;
+  // slot checkpoint cards (per-slot chunk + running cumulative)
+  document.getElementById('slotsStrip').innerHTML=`
+    <div class="slot-card"><div class="when">By 12 PM</div><div class="qty">${fmt(t.t12)}</div><div class="cum">running total ${fmt(t.by12)}</div></div>
+    <div class="slot-card"><div class="when">12 – 4 PM</div><div class="qty">${fmt(t.t16)}</div><div class="cum">running total ${fmt(t.by4)}</div></div>
+    <div class="slot-card"><div class="when">4 – 7 PM</div><div class="qty">${fmt(t.t19)}</div><div class="cum">running total ${fmt(t.by7)}</div></div>
+    <div class="slot-card total"><div class="when">Day total so far</div><div class="qty">${fmt(t.actual||t.by7)}</div><div class="cum">plan ${fmt(t.plan)} · ${t.plan?Math.round((t.actual)/t.plan*100):0}% · down ${t.down}m</div></div>`;
+  // per-line live status
+  const lines=DATA.todayLines||[];
+  const labelMap={'on-track':'On track','behind':'Behind','low':'Low','stopped':'Stopped'};
+  document.getElementById('liveLineGrid').innerHTML = lines.length? lines.map(L=>{
+    const pct=L.plan?Math.min(100,Math.round(L.actual/L.plan*100)):0;
+    const barCol=L.status==='on-track'?'var(--green)':L.status==='behind'?'var(--amber)':'var(--red)';
+    const stop = L.reasons&&L.reasons.length
+      ? `<div class="lc-stop"><span>⚠</span><span>${L.reasons.join(' · ')}</span></div>` : '';
+    const ops=[L.op1,L.op2,L.op3].filter(Boolean).join(', ');
+    return `<div class="linecard ${L.status}">
+      <div class="lc-top"><div class="lc-name">${L.line}</div><div class="lc-badge b-${L.status}">${labelMap[L.status]||''}</div></div>
+      <div class="lc-part">${L.parts||'—'}</div>
+      <div class="lc-nums">
+        <div class="n"><div class="v" style="color:var(--steel)">${fmt(L.actual)}</div><div class="l">Actual</div></div>
+        <div class="n"><div class="v">${fmt(L.plan)}</div><div class="l">Plan</div></div>
+        <div class="n"><div class="v" style="color:${achColor(L.achieve)}">${L.achieve}%</div><div class="l">Achieve</div></div>
+      </div>
+      <div class="lc-prog"><i style="width:${pct}%;background:${barCol}"></i></div>
+      <div class="lc-slots"><span>12pm <b>${fmt(L.by12)}</b></span><span>4pm <b>${fmt(L.by4)}</b></span><span>7pm <b>${fmt(L.by7)}</b></span></div>
+      ${stop}
+      <div class="lc-ops"><b>Operators:</b> ${ops||'—'}</div>
+    </div>`;
+  }).join('') : `<div class="empty" style="grid-column:1/-1">No data for the latest day yet.</div>`;
 }
 
 /* ----- DAILY: dual bars ----- */
@@ -722,6 +841,64 @@ function renderLog(){
     :`<tr><td colspan="13" class="empty">No rows match.</td></tr>`;
 }
 
+/* ================== YEAR VIEW ================== */
+function loadYear(year){
+  document.getElementById('yearLoading').style.display='block';
+  document.getElementById('yearBody').style.display='none';
+  fetch(API_URL+'?action=year'+(year?'&year='+encodeURIComponent(year):''))
+    .then(r=>r.json()).then(d=>{
+      if(!d.ok){ document.getElementById('yearLoading').textContent='Error: '+(d.error||'no data'); return; }
+      YEAR_DATA=d; renderYear();
+    }).catch(()=>{ document.getElementById('yearLoading').textContent='Network error loading year.'; });
+}
+function renderYear(){
+  const d=YEAR_DATA, t=d.total, M=d.months;
+  // year selector (derive years present)
+  const ysel=document.getElementById('yearSel');
+  if(!ysel.dataset.filled){
+    const yrs=[...new Set(M.map(m=>m.monthLabel.split(' ')[1]))].sort();
+    ysel.innerHTML='<option value="">All months</option>'+yrs.map(y=>`<option value="${y}">${y}</option>`).join('');
+    ysel.dataset.filled='1';
+  }
+  document.getElementById('yearLoading').style.display='none';
+  document.getElementById('yearBody').style.display='block';
+  document.getElementById('yearKpis').innerHTML=`
+    <div class="kpi"><div class="top"><div class="lbl">Year Achievement</div><div class="ico ic-steel">◎</div></div><div class="val v-steel">${t.achieve}%</div><div class="sub">${fmt(t.actual)} of ${fmt(t.plan)} planned</div></div>
+    <div class="kpi"><div class="top"><div class="lbl">Total Output</div><div class="ico ic-green">▲</div></div><div class="val v-green">${fmt(t.actual)}</div><div class="sub">across ${t.monthsCount} months</div></div>
+    <div class="kpi"><div class="top"><div class="lbl">Total Downtime</div><div class="ico ic-red">⚠</div></div><div class="val v-red">${fmt(t.downHours)}h</div><div class="sub">${fmt(t.downMin)} min</div></div>
+    <div class="kpi"><div class="top"><div class="lbl">Total Manpower</div><div class="ico ic-violet">☖</div></div><div class="val v-violet">${fmt(t.manpower)}</div><div class="sub">shift-slots · ${fmt(t.activeDays)} active days</div></div>`;
+  // charts
+  killChart('chYearOut');
+  CHARTS.chYearOut=new Chart(document.getElementById('chYearOut'),{
+    type:'bar',
+    data:{labels:M.map(m=>m.monthLabel),datasets:[
+      {label:'Plan',data:M.map(m=>m.plan),backgroundColor:'#c3ccd9',borderRadius:4},
+      {label:'Actual',data:M.map(m=>m.actual),backgroundColor:'#2f6fb0',borderRadius:4}]},
+    options:{maintainAspectRatio:false,plugins:{legend:LEG,
+      tooltip:{callbacks:{afterBody:(it)=>'Achievement: '+M[it[0].dataIndex].achieve+'%'}}},
+      scales:{x:{grid:{display:false},ticks:TICK},y:{grid:GRID,ticks:TICK,beginAtZero:true}}}
+  });
+  killChart('chYearDown');
+  CHARTS.chYearDown=new Chart(document.getElementById('chYearDown'),{
+    type:'bar',
+    data:{labels:M.map(m=>m.monthLabel),datasets:[{data:M.map(m=>m.downHours),backgroundColor:'#e7a3a0',borderRadius:4}]},
+    options:{maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:TICK},y:{grid:GRID,ticks:TICK,beginAtZero:true}}}
+  });
+  killChart('chYearMan');
+  CHARTS.chYearMan=new Chart(document.getElementById('chYearMan'),{
+    type:'bar',
+    data:{labels:M.map(m=>m.monthLabel),datasets:[{data:M.map(m=>m.manpower),backgroundColor:'#6b4fb0',borderRadius:4}]},
+    options:{maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:TICK},y:{grid:GRID,ticks:TICK,beginAtZero:true}}}
+  });
+  document.querySelector('#yearTbl tbody').innerHTML=M.length?M.map(m=>`<tr>
+    <td>${m.monthLabel}${m.hidden?' <span style="color:var(--dim);font-size:11px">(archived)</span>':''}</td>
+    <td class="num">${fmt(m.plan)}</td><td class="num">${fmt(m.actual)}</td><td>${achPill(m.achieve)}</td>
+    <td class="num">${fmt(m.avgPerDay)}</td><td class="num">${fmt(m.downHours)}</td><td class="num">${fmt(m.manpower)}</td><td class="num">${m.activeDays}</td>
+  </tr>`).join('') : `<tr><td colspan="8" class="empty">No month data.</td></tr>`;
+}
+
 /* ================== REPORTS ================== */
 function setReport(t,btn){ curReport=t;
   document.querySelectorAll('.rep-controls button:not(.print)').forEach(b=>b.classList.remove('active'));
@@ -748,10 +925,10 @@ function repMonthly(){
     <div class="kgrid">
       <div class="kbox"><div class="l">Plan Achievement</div><div class="v">${k.achieve}%</div></div>
       <div class="kbox"><div class="l">Total Output</div><div class="v">${fmt(k.totalActual)}</div></div>
-      <div class="kbox"><div class="l">Avg / Day</div><div class="v">${fmt(k.avgPerDay)}</div></div>
+      <div class="kbox"><div class="l">Manpower</div><div class="v">${fmt(k.manpower)}</div></div>
       <div class="kbox"><div class="l">Downtime</div><div class="v">${k.downHours}h</div></div>
     </div>
-    <p style="color:#555;font-size:12px">Active days: ${k.activeDays} · Best ${k.bestDay?k.bestDay.label+' ('+k.bestDay.achieve+'%)':'—'} · Weakest ${k.worstDay?k.worstDay.label+' ('+k.worstDay.achieve+'%)':'—'}</p>
+    <p style="color:#555;font-size:12px">Active days: ${k.activeDays} · Avg/day ${fmt(k.avgPerDay)} · Best ${k.bestDay?k.bestDay.label+' ('+k.bestDay.achieve+'%)':'—'} · Weakest ${k.worstDay?k.worstDay.label+' ('+k.worstDay.achieve+'%)':'—'}</p>
     <h2>Line Performance</h2>
     <table><thead><tr><th>Line</th><th style="text-align:right">Plan</th><th style="text-align:right">Actual</th><th style="text-align:right">Achieve</th><th style="text-align:right">Down (min)</th></tr></thead><tbody>${lineRows}</tbody></table>
     <h2>Top Parts by Output</h2>
