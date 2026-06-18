@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shree Pressing — Magnet Case Production FMS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1117; --panel:#161b22; --panel2:#1c232d; --line:#2a323d;
+  --ink:#e6edf3; --muted:#8b97a7; --dim:#6a7686;
+  --amber:#ffb020; --amber-dim:#3a2c10;
+  --green:#3fb950; --green-dim:#11321a;
+  --red:#f85149; --red-dim:#3a1414;
+  --blue:#58a6ff; --cyan:#39c5cf;
+  --mono:'JetBrains Mono',monospace; --sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+button{font-family:inherit;cursor:pointer}
+::-webkit-scrollbar{height:8px;width:8px}::-webkit-scrollbar-thumb{background:#2a323d;border-radius:4px}
+
+/* ---------- LOGIN ---------- */
+#login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 30% 20%,#15202c,#0d1117 70%);z-index:100}
+.login-card{width:360px;max-width:92vw;background:var(--panel);border:1px solid var(--line);
+  border-radius:16px;padding:34px 30px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.login-card .badge{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--amber);text-transform:uppercase}
+.login-card h1{font-size:22px;font-weight:800;margin:8px 0 2px}
+.login-card p{color:var(--muted);font-size:13px;margin-bottom:22px}
+.login-card input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);
+  border-radius:10px;padding:13px 14px;font-family:var(--mono);font-size:18px;letter-spacing:6px;text-align:center}
+.login-card input:focus{outline:none;border-color:var(--amber)}
+.login-card button{width:100%;margin-top:14px;background:var(--amber);color:#1a1300;border:none;
+  border-radius:10px;padding:13px;font-weight:700;font-size:15px}
+.login-card button:hover{filter:brightness(1.08)}
+.login-err{color:var(--red);font-size:12.5px;margin-top:10px;min-height:16px;text-align:center}
+
+/* ---------- SHELL ---------- */
+#app{display:none}
+header.top{position:sticky;top:0;z-index:40;background:rgba(13,17,23,.9);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:11px}
+.brand .dot{width:11px;height:11px;border-radius:3px;background:var(--amber);box-shadow:0 0 12px var(--amber)}
+.brand b{font-size:15px;font-weight:800}.brand span{color:var(--dim);font-size:12px}
+.top .spacer{flex:1}
+select#monthSel{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:8px;
+  padding:8px 12px;font-family:var(--mono);font-size:13px}
+.top .meta{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:right;line-height:1.5}
+.top button.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:8px 12px;font-size:12.5px}
+.top button.ghost:hover{border-color:var(--amber);color:var(--amber)}
+
+nav.tabs{display:flex;gap:4px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--panel);overflow-x:auto;position:sticky;top:57px;z-index:35}
+nav.tabs button{background:none;border:none;color:var(--muted);padding:13px 16px;font-size:13.5px;font-weight:600;
+  border-bottom:2px solid transparent;white-space:nowrap}
+nav.tabs button:hover{color:var(--ink)}
+nav.tabs button.active{color:var(--amber);border-bottom-color:var(--amber)}
+
+main{padding:22px 20px 60px;max-width:1320px;margin:0 auto}
+.page{display:none;animation:fade .25s ease}.page.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h2.sect{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin:26px 0 12px;font-weight:700}
+h2.sect:first-child{margin-top:0}
+
+/* ---------- KPI CARDS ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:16px 17px;position:relative;transition:.15s}
+.kpi.click{cursor:pointer}.kpi.click:hover{border-color:var(--amber);transform:translateY(-2px)}
+.kpi .lbl{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);font-weight:600}
+.kpi .val{font-family:var(--mono);font-size:30px;font-weight:700;margin-top:7px;line-height:1}
+.kpi .sub{font-size:11.5px;color:var(--muted);margin-top:7px}
+.kpi .strip{position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px}
+.amber .val{color:var(--amber)}.amber .strip{background:var(--amber)}
+.green .val{color:var(--green)}.green .strip{background:var(--green)}
+.red .val{color:var(--red)}.red .strip{background:var(--red)}
+.blue .val{color:var(--blue)}.blue .strip{background:var(--blue)}
+.cyan .val{color:var(--cyan)}.cyan .strip{background:var(--cyan)}
+
+/* ---------- PANELS / CHARTS ---------- */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:880px){.grid2,.grid3{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:16px 18px}
+.panel h3{font-size:13.5px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:8px}
+.panel .hint{font-size:11.5px;color:var(--dim);margin-bottom:12px}
+.chartbox{position:relative;height:280px}
+.chartbox.tall{height:340px}
+
+/* ---------- TABLES ---------- */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:11px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--panel2);color:var(--muted);text-align:left;padding:10px 12px;font-size:11px;
+  text-transform:uppercase;letter-spacing:.5px;font-weight:600;position:sticky;top:0;cursor:pointer;white-space:nowrap}
+th:hover{color:var(--amber)}
+td{padding:10px 12px;border-top:1px solid var(--line)}
+tr:hover td{background:#1a212b}
+td.num,th.num{font-family:var(--mono);text-align:right}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-family:var(--mono);font-size:11.5px;font-weight:700}
+.p-good{background:var(--green-dim);color:var(--green)}
+.p-mid{background:var(--amber-dim);color:var(--amber)}
+.p-bad{background:var(--red-dim);color:var(--red)}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;min-width:60px}
+.bar>i{display:block;height:100%;border-radius:3px}
+
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.toolbar input,.toolbar select{background:var(--panel);border:1px solid var(--line);color:var(--ink);
+  border-radius:8px;padding:9px 12px;font-size:13px;font-family:var(--sans)}
+.toolbar input:focus,.toolbar select:focus{outline:none;border-color:var(--amber)}
+.toolbar .clear{background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:9px 13px;font-size:12.5px}
+.filter-tag{background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber);border-radius:20px;
+  padding:5px 12px;font-size:12px;display:inline-flex;gap:8px;align-items:center}
+.filter-tag b{cursor:pointer}
+
+.loading{text-align:center;color:var(--dim);padding:60px;font-family:var(--mono)}
+.empty{text-align:center;color:var(--dim);padding:36px;font-size:13px}
+
+/* ---------- REPORTS / PRINT ---------- */
+.rep-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.rep-controls button{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:11px 16px;font-size:13px;font-weight:600}
+.rep-controls button.active{background:var(--amber);color:#1a1300;border-color:var(--amber)}
+.rep-controls button.print{margin-left:auto;background:var(--green);color:#04210b;border-color:var(--green)}
+#reportArea{background:#fff;color:#111;border-radius:12px;padding:34px 38px;font-size:13px}
+#reportArea h1{font-size:21px;margin-bottom:3px;color:#111}
+#reportArea .rhead{display:flex;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:18px}
+#reportArea .rhead .r{ text-align:right;font-size:12px;color:#555}
+#reportArea h2{font-size:14px;margin:20px 0 8px;color:#111;border-left:4px solid #ffb020;padding-left:9px}
+#reportArea table{font-size:12px}
+#reportArea th{background:#f0f0f0;color:#333;position:static}
+#reportArea td{border-top:1px solid #ddd}
+#reportArea .kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:6px 0 4px}
+#reportArea .kbox{border:1px solid #ddd;border-radius:8px;padding:11px 13px}
+#reportArea .kbox .l{font-size:10px;text-transform:uppercase;color:#777;letter-spacing:.5px}
+#reportArea .kbox .v{font-family:var(--mono);font-size:21px;font-weight:700;margin-top:3px}
+#reportArea .sign{margin-top:34px;display:flex;justify-content:space-between;color:#444;font-size:12px}
+#reportArea .sign div{border-top:1px solid #999;padding-top:6px;width:180px;text-align:center}
+@media print{
+  body *{visibility:hidden}
+  #reportArea,#reportArea *{visibility:visible}
+  #reportArea{position:absolute;left:0;top:0;width:100%;border-radius:0;padding:10px 4px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login">
+  <div class="login-card">
+    <div class="badge">Shree Pressing</div>
+    <h1>Magnet Case FMS</h1>
+    <p>Live production monitoring portal</p>
+    <input id="pin" type="password" inputmode="numeric" maxlength="8" placeholder="• • • •" autocomplete="off">
+    <button onclick="doLogin()">Enter Dashboard</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+  <header class="top">
+    <div class="brand"><span class="dot"></span><b>Magnet Case</b><span>Production FMS</span></div>
+    <div class="spacer"></div>
+    <select id="monthSel" onchange="loadMonth(this.value)"></select>
+    <button class="ghost" onclick="refresh()">↻ Refresh</button>
+    <div class="meta" id="metaBox"></div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="active" onclick="showTab('overview',this)">Overview</button>
+    <button onclick="showTab('today',this)">Latest Day</button>
+    <button onclick="showTab('lines',this)">Lines</button>
+    <button onclick="showTab('parts',this)">Parts</button>
+    <button onclick="showTab('operators',this)">Operators</button>
+    <button onclick="showTab('downtime',this)">Downtime</button>
+    <button onclick="showTab('log',this)">Day Log</button>
+    <button onclick="showTab('reports',this)">Reports</button>
+  </nav>
+
+  <main>
+    <div id="loadingMain" class="loading">Loading production data…</div>
+
+    <!-- OVERVIEW -->
+    <section class="page active" id="overview" style="display:none">
+      <div class="kpis" id="kpiRow"></div>
+
+      <h2 class="sect">Daily Output — Plan vs Actual</h2>
+      <div class="panel">
+        <div class="hint">Bars are actual output; the line is planned output. Tap a day to inspect it in the Day Log.</div>
+        <div class="chartbox tall"><canvas id="chDaily"></canvas></div>
+      </div>
+
+      <div class="grid2" style="margin-top:16px">
+        <div class="panel">
+          <h3>Plan Attainment %</h3>
+          <div class="hint">Daily actual ÷ plan. Target line at <span id="tgtLbl">100</span>%.</div>
+          <div class="chartbox"><canvas id="chAttain"></canvas></div>
+        </div>
+        <div class="panel">
+          <h3>Output by Time Slot</h3>
+          <div class="hint">Where the volume comes from across the shift.</div>
+          <div class="chartbox"><canvas id="chSlots"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LATEST DAY -->
+    <section class="page" id="today" style="display:none">
+      <h2 class="sect" id="todayTitle">Latest Filled Day</h2>
+      <div class="kpis" id="todayKpis"></div>
+      <h2 class="sect">Line-by-line breakdown</h2>
+      <div class="tbl-wrap">
+        <table id="todayTbl"><thead><tr>
+          <th>Line</th><th>Part</th><th class="num">Plan</th><th class="num">Actual</th><th>Attain</th>
+          <th class="num">12 PM</th><th class="num">4 PM</th><th class="num">7 PM</th>
+          <th>1st</th><th>2D</th><th>Trimming</th><th class="num">Down</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <!-- LINES -->
+    <section class="page" id="lines" style="display:none">
+      <h2 class="sect">Line Performance (month)</h2>
+      <div class="grid2">
+        <div class="panel"><h3>Actual Output by Line</h3><div class="chartbox"><canvas id="chLineOut"></canvas></div></div>
+        <div class="panel"><h3>Attainment by Line</h3><div class="chartbox"><canvas id="chLineAtt"></canvas></div></div>
+      </div>
+      <h2 class="sect">Detail</h2>
+      <div class="tbl-wrap">
+        <table id="lineTbl"><thead><tr>
+          <th>Line</th><th class="num">Plan</th><th class="num">Actual</th><th>Attain</th>
+          <th class="num">Down (min)</th><th class="num">Active days</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <!-- PARTS -->
+    <section class="page" id="parts" style="display:none">
+      <h2 class="sect">Part Mix (variants merged)</h2>
+      <div class="panel">
+        <div class="hint">Top parts by actual output. Tap a bar to filter the table below.</div>
+        <div class="chartbox tall"><canvas id="chParts"></canvas></div>
+      </div>
+      <div class="toolbar" style="margin-top:16px">
+        <input id="partSearch" placeholder="Search part…" oninput="renderParts()">
+        <span id="partFilterTag"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table id="partTbl"><thead><tr>
+          <th onclick="sortParts('part')">Part</th>
+          <th class="num" onclick="sortParts('plan')">Plan</th>
+          <th class="num" onclick="sortParts('actual')">Actual</th>
+          <th onclick="sortParts('attain')">Attain</th>
+          <th class="num" onclick="sortParts('runs')">Runs</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <!-- OPERATORS -->
+    <section class="page" id="operators" style="display:none">
+      <h2 class="sect">Operator Activity</h2>
+      <div class="hint" style="color:var(--dim);margin-bottom:14px">Names are auto-cleaned (spelling variants merged). "Output linked" is the total line output during shifts an operator worked — a workload indicator, not an individual-productivity score, since 3 operators share a line.</div>
+      <div class="panel">
+        <div class="hint">Most active operators by shifts worked.</div>
+        <div class="chartbox tall"><canvas id="chOps"></canvas></div>
+      </div>
+      <div class="toolbar" style="margin-top:16px">
+        <input id="opSearch" placeholder="Search operator…" oninput="renderOps()">
+      </div>
+      <div class="tbl-wrap">
+        <table id="opTbl"><thead><tr>
+          <th onclick="sortOps('name')">Operator</th>
+          <th class="num" onclick="sortOps('shifts')">Shifts</th>
+          <th class="num">1st</th><th class="num">2D</th><th class="num">Trim</th>
+          <th class="num" onclick="sortOps('actual')">Output linked</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <!-- DOWNTIME -->
+    <section class="page" id="downtime" style="display:none">
+      <h2 class="sect">Downtime & Stoppages</h2>
+      <div class="kpis" id="dtKpis"></div>
+      <div class="grid2" style="margin-top:16px">
+        <div class="panel"><h3>Downtime by Cause (min)</h3><div class="chartbox"><canvas id="chDtType"></canvas></div></div>
+        <div class="panel"><h3>Downtime by Day (min)</h3><div class="chartbox"><canvas id="chDtDay"></canvas></div></div>
+      </div>
+    </section>
+
+    <!-- DAY LOG -->
+    <section class="page" id="log" style="display:none">
+      <h2 class="sect">Full Day Log</h2>
+      <div class="toolbar">
+        <input id="logSearch" placeholder="Search part, line, operator…" oninput="renderLog()">
+        <select id="logLine" onchange="renderLog()"><option value="">All lines</option></select>
+        <select id="logDate" onchange="renderLog()"><option value="">All dates</option></select>
+        <span id="logFilterTag"></span>
+        <button class="clear" onclick="clearLog()">Clear</button>
+      </div>
+      <div class="tbl-wrap">
+        <table id="logTbl"><thead><tr>
+          <th onclick="sortLog('date')">Date</th><th onclick="sortLog('line')">Line</th>
+          <th onclick="sortLog('part')">Part</th>
+          <th class="num" onclick="sortLog('plan')">Plan</th>
+          <th class="num" onclick="sortLog('actual')">Actual</th>
+          <th onclick="sortLog('attain')">Attain</th>
+          <th class="num">12</th><th class="num">4</th><th class="num">7</th>
+          <th>1st</th><th>2D</th><th>Trim</th><th class="num">Down</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section class="page" id="reports" style="display:none">
+      <h2 class="sect">Director Reports</h2>
+      <div class="rep-controls">
+        <button class="active" id="rb-monthly" onclick="setReport('monthly',this)">Monthly Summary</button>
+        <button id="rb-daily" onclick="setReport('daily',this)">Latest-Day Report</button>
+        <button id="rb-line" onclick="setReport('line',this)">Line Scorecard</button>
+        <button class="print" onclick="window.print()">🖨 Print / Save PDF</button>
+      </div>
+      <div id="reportArea"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* ================== CONFIG ================== */
+const API_URL = "https://script.google.com/macros/s/AKfycbz0_-sKUyO7b73r9AZ1-o7iZFwPHzssz0_0PZosgn-IPHhdcFS7wZrOY1c6VkxosPRp/exec";  // <-- paste /exec URL from Apps Script
+
+/* ================== STATE ================== */
+let DATA=null, CHARTS={}, sortP={k:'actual',d:-1}, sortO={k:'shifts',d:-1}, sortL={k:'date',d:1};
+let partFilter='', logState={line:'',date:''}, curReport='monthly';
+
+/* ================== LOGIN ================== */
+function doLogin(){
+  const pin=document.getElementById('pin').value.trim();
+  const err=document.getElementById('loginErr'); err.textContent='';
+  if(!pin){err.textContent='Enter your PIN';return;}
+  if(API_URL.indexOf('PASTE_')===0){err.textContent='Set API_URL first (see Apps Script setup).';return;}
+  err.textContent='Checking…';
+  fetch(API_URL+'?action=login&pin='+encodeURIComponent(pin))
+    .then(r=>r.json()).then(d=>{
+      if(d.ok){ sessionStorage.setItem('mc_ok','1'); enterApp(); }
+      else err.textContent=d.error||'Login failed';
+    }).catch(()=>err.textContent='Cannot reach server. Check API_URL / deployment.');
+}
+document.getElementById('pin').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+if(sessionStorage.getItem('mc_ok')==='1'){ window.addEventListener('load',enterApp); }
+
+function enterApp(){
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='block';
+  loadMonths();
+}
+
+/* ================== DATA LOAD ================== */
+function loadMonths(){
+  fetch(API_URL+'?action=months').then(r=>r.json()).then(d=>{
+    const sel=document.getElementById('monthSel'); sel.innerHTML='';
+    (d.months||[]).forEach(m=>{
+      const o=document.createElement('option'); o.value=m.name;
+      o.textContent=m.name+(m.hidden?' (archived)':''); sel.appendChild(o);
+    });
+    if((d.months||[]).length){ loadMonth(sel.value); }
+    else loadMonth('');
+  }).catch(()=>{ document.getElementById('loadingMain').textContent='Cannot load months. Check deployment.'; });
+}
+function loadMonth(name){
+  document.getElementById('loadingMain').style.display='block';
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  fetch(API_URL+'?action=data'+(name?'&month='+encodeURIComponent(name):''))
+    .then(r=>r.json()).then(d=>{
+      if(!d.ok){ document.getElementById('loadingMain').textContent='Error: '+(d.error||'no data'); return; }
+      DATA=d; document.getElementById('loadingMain').style.display='none';
+      const active=document.querySelector('nav.tabs button.active');
+      const tab = active? active.getAttribute('onclick').match(/'([^']+)'/)[1] : 'overview';
+      document.getElementById(tab).style.display='block';
+      document.getElementById('metaBox').innerHTML='Updated '+d.generated+'<br>'+d.month;
+      renderAll();
+    }).catch(()=>{ document.getElementById('loadingMain').textContent='Network error.'; });
+}
+function refresh(){ loadMonth(document.getElementById('monthSel').value); }
+
+/* ================== TABS ================== */
+function showTab(id,btn){
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
+  const pg=document.getElementById(id); pg.classList.add('active'); pg.style.display='block';
+}
+
+/* ================== HELPERS ================== */
+const fmt=n=>(n||0).toLocaleString('en-IN');
+function attPill(p){ const c=p>=95?'p-good':p>=80?'p-mid':'p-bad'; return `<span class="pill ${c}">${p}%</span>`; }
+function attColor(p){ return p>=95?'#3fb950':p>=80?'#ffb020':'#f85149'; }
+function killChart(id){ if(CHARTS[id]){CHARTS[id].destroy();delete CHARTS[id];} }
+const GRID={color:'#222a34'}, TICK={color:'#8b97a7',font:{family:"'JetBrains Mono'",size:11}};
+
+/* ================== RENDER ALL ================== */
+function renderAll(){
+  renderKpis(); renderDaily(); renderAttain(); renderSlots();
+  renderToday(); renderLines(); renderPartsChart(); renderParts();
+  renderOps(); renderDowntime(); fillLogFilters(); renderLog(); buildReport();
+}
+
+/* ----- OVERVIEW KPIs ----- */
+function renderKpis(){
+  const k=DATA.kpis;
+  const cards=[
+    {c:'amber',l:'Plan Attainment',v:k.attain+'%',s:`${fmt(k.totalActual)} of ${fmt(k.totalPlan)} planned`,t:'overview'},
+    {c:'green',l:'Total Output',v:fmt(k.totalActual),s:`avg ${fmt(k.avgPerDay)}/day · ${k.activeDays} days`},
+    {c:'blue',l:'Lines Running',v:k.linesCount,s:'production lines this month'},
+    {c:'red',l:'Downtime',v:k.downHours+'h',s:`${fmt(k.totalDownMin)} min logged`,t:'downtime'},
+    {c:'cyan',l:'Best Day',v:k.bestDay?k.bestDay.attain+'%':'—',s:k.bestDay?k.bestDay.label:'',t:'overview'},
+    {c:'red',l:'Weakest Day',v:k.worstDay?k.worstDay.attain+'%':'—',s:k.worstDay?k.worstDay.label:'',t:'overview'},
+  ];
+  document.getElementById('kpiRow').innerHTML=cards.map(c=>`
+    <div class="kpi ${c.c} ${c.t?'click':''}" ${c.t?`onclick="jump('${c.t}')"`:''}>
+      <span class="strip"></span><div class="lbl">${c.l}</div>
+      <div class="val">${c.v}</div><div class="sub">${c.s}</div></div>`).join('');
+}
+function jump(tab){ const btns=[...document.querySelectorAll('nav.tabs button')];
+  const b=btns.find(x=>x.getAttribute('onclick').includes("'"+tab+"'")); if(b)b.click(); }
+
+/* ----- DAILY CHART ----- */
+function renderDaily(){
+  killChart('chDaily');
+  const d=DATA.days;
+  CHARTS.chDaily=new Chart(document.getElementById('chDaily'),{
+    data:{labels:d.map(x=>x.label),datasets:[
+      {type:'bar',label:'Actual',data:d.map(x=>x.actual),backgroundColor:'#3fb950cc',borderRadius:4,order:2},
+      {type:'line',label:'Plan',data:d.map(x=>x.plan),borderColor:'#ffb020',backgroundColor:'#ffb020',
+        borderWidth:2,pointRadius:2,tension:.25,order:1}
+    ]},
+    options:{maintainAspectRatio:false,onClick:(e,el)=>{if(el.length){jump('log');logState.date=d[el[0].index].date;
+        document.getElementById('logDate').value=d[el[0].index].date;renderLog();}},
+      plugins:{legend:{labels:{color:'#e6edf3',font:{size:12}}}},
+      scales:{x:{grid:GRID,ticks:TICK},y:{grid:GRID,ticks:TICK,beginAtZero:true}}}
+  });
+}
+function renderAttain(){
+  killChart('chAttain'); document.getElementById('tgtLbl').textContent=DATA.target;
+  const d=DATA.days;
+  CHARTS.chAttain=new Chart(document.getElementById('chAttain'),{
+    type:'line',
+    data:{labels:d.map(x=>x.label),datasets:[
+      {label:'Attain %',data:d.map(x=>x.attain),borderColor:'#58a6ff',backgroundColor:'#58a6ff22',
+        fill:true,tension:.3,pointRadius:3,pointBackgroundColor:d.map(x=>attColor(x.attain))},
+      {label:'Target',data:d.map(()=>DATA.target),borderColor:'#8b97a7',borderDash:[5,5],borderWidth:1,pointRadius:0}
+    ]},
+    options:{maintainAspectRatio:false,plugins:{legend:{labels:{color:'#e6edf3'}}},
+      scales:{x:{grid:GRID,ticks:TICK},y:{grid:GRID,ticks:TICK,beginAtZero:true}}}
+  });
+}
+function renderSlots(){
+  killChart('chSlots'); const s=DATA.slots;
+  CHARTS.chSlots=new Chart(document.getElementById('chSlots'),{
+    type:'doughnut',
+    data:{labels:['By 12 PM','12–4 PM','4–7 PM'],datasets:[{data:[s.t12,s.t16,s.t19],
+      backgroundColor:['#39c5cf','#58a6ff','#ffb020'],borderColor:'#161b22',borderWidth:3}]},
+    options:{maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#e6edf3',padding:14}}}}
+  });
+}
+
+/* ----- LATEST DAY ----- */
+function renderToday(){
+  const rows=DATA.lastRows||[];
+  document.getElementById('todayTitle').textContent='Latest Filled Day — '+(DATA.lastDate||'');
+  let plan=0,act=0,down=0; rows.forEach(r=>{plan+=r.plan;act+=r.actual;down+=r.downMin;});
+  const att=plan?Math.round(act/plan*1000)/10:0;
+  document.getElementById('todayKpis').innerHTML=`
+    <div class="kpi amber"><span class="strip"></span><div class="lbl">Attainment</div><div class="val">${att}%</div><div class="sub">${fmt(act)} / ${fmt(plan)}</div></div>
+    <div class="kpi green"><span class="strip"></span><div class="lbl">Output</div><div class="val">${fmt(act)}</div><div class="sub">across ${rows.length} entries</div></div>
+    <div class="kpi red"><span class="strip"></span><div class="lbl">Downtime</div><div class="val">${down}m</div><div class="sub">logged stoppages</div></div>`;
+  const tb=document.querySelector('#todayTbl tbody');
+  tb.innerHTML = rows.length? rows.map(r=>`<tr>
+    <td>${r.line}</td><td>${r.part}</td><td class="num">${fmt(r.plan)}</td><td class="num">${fmt(r.actual)}</td>
+    <td>${attPill(r.attain)}</td><td class="num">${fmt(r.t12)}</td><td class="num">${fmt(r.t16)}</td><td class="num">${fmt(r.t19)}</td>
+    <td>${r.opt1||'—'}</td><td>${r.opt2||'—'}</td><td>${r.opt3||'—'}</td><td class="num">${r.downMin||0}</td></tr>`).join('')
+    : `<tr><td colspan="12" class="empty">No data for latest day.</td></tr>`;
+}
+
+/* ----- LINES ----- */
+function renderLines(){
+  const L=DATA.lines;
+  killChart('chLineOut');
+  CHARTS.chLineOut=new Chart(document.getElementById('chLineOut'),{
+    type:'bar',
+    data:{labels:L.map(x=>x.line),datasets:[
+      {label:'Plan',data:L.map(x=>x.plan),backgroundColor:'#2a323d'},
+      {label:'Actual',data:L.map(x=>x.actual),backgroundColor:'#3fb950cc',borderRadius:4}]},
+    options:{maintainAspectRatio:false,plugins:{legend:{labels:{color:'#e6edf3'}}},
+      scales:{x:{grid:GRID,ticks:TICK},y:{grid:GRID,ticks:TICK,beginAtZero:true}}}
+  });
+  killChart('chLineAtt');
+  CHARTS.chLineAtt=new Chart(document.getElementById('chLineAtt'),{
+    type:'bar',
+    data:{labels:L.map(x=>x.line),datasets:[{label:'Attain %',data:L.map(x=>x.attain),
+      backgroundColor:L.map(x=>attColor(x.attain)),borderRadius:4}]},
+    options:{maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},
+      scales:{x:{grid:GRID,ticks:TICK,beginAtZero:true},y:{grid:GRID,ticks:TICK}}}
+  });
+  document.querySelector('#lineTbl tbody').innerHTML=L.map(x=>`<tr>
+    <td>${x.line}</td><td class="num">${fmt(x.plan)}</td><td class="num">${fmt(x.actual)}</td>
+    <td>${attPill(x.attain)}</td><td class="num">${x.down}</td><td class="num">${x.activeDays}</td></tr>`).join('');
+}
+
+/* ----- PARTS ----- */
+function renderPartsChart(){
+  killChart('chParts'); const p=DATA.parts.slice(0,12);
+  CHARTS.chParts=new Chart(document.getElementById('chParts'),{
+    type:'bar',
+    data:{labels:p.map(x=>x.part),datasets:[{label:'Actual',data:p.map(x=>x.actual),
+      backgroundColor:'#39c5cfcc',borderRadius:4}]},
+    options:{maintainAspectRatio:false,onClick:(e,el)=>{if(el.length){partFilter=p[el[0].index].part;
+        document.getElementById('partSearch').value=partFilter;renderParts();}},
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:GRID,ticks:TICK},y:{grid:GRID,ticks:TICK,beginAtZero:true}}}
+  });
+}
+function sortParts(k){ sortP.d = sortP.k===k? -sortP.d : (k==='part'?1:-1); sortP.k=k; renderParts(); }
+function renderParts(){
+  const q=document.getElementById('partSearch').value.toLowerCase().trim();
+  let rows=DATA.parts.filter(x=>x.part.toLowerCase().includes(q));
+  rows.sort((a,b)=>{const A=a[sortP.k],B=b[sortP.k];return (A<B?-1:A>B?1:0)*sortP.d;});
+  const tag=document.getElementById('partFilterTag');
+  tag.innerHTML = q? `<span class="filter-tag">Filter: ${q} <b onclick="document.getElementById('partSearch').value='';renderParts()">✕</b></span>`:'';
+  const max=Math.max(...DATA.parts.map(x=>x.actual),1);
+  document.querySelector('#partTbl tbody').innerHTML=rows.length?rows.map(x=>`<tr>
+    <td>${x.part}</td><td class="num">${fmt(x.plan)}</td>
+    <td class="num"><div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+      ${fmt(x.actual)}<div class="bar" style="width:70px"><i style="width:${x.actual/max*100}%;background:#39c5cf"></i></div></div></td>
+    <td>${attPill(x.attain)}</td><td class="num">${x.runs}</td></tr>`).join('')
+    :`<tr><td colspan="5" class="empty">No matching parts.</td></tr>`;
+}
+
+/* ----- OPERATORS ----- */
+function renderOps(){
+  killChart('chOps');
+  const top=DATA.operators.slice(0,15);
+  CHARTS.chOps=new Chart(document.getElementById('chOps'),{
+    type:'bar',
+    data:{labels:top.map(x=>x.name),datasets:[{label:'Shifts',data:top.map(x=>x.shifts),
+      backgroundColor:'#58a6ffcc',borderRadius:4}]},
+    options:{maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},
+      scales:{x:{grid:GRID,ticks:TICK,beginAtZero:true},y:{grid:GRID,ticks:TICK}}}
+  });
+  const q=document.getElementById('opSearch').value.toLowerCase().trim();
+  let rows=DATA.operators.filter(x=>x.name.toLowerCase().includes(q));
+  rows.sort((a,b)=>{const A=a[sortO.k],B=b[sortO.k];return (A<B?-1:A>B?1:0)*sortO.d;});
+  document.querySelector('#opTbl tbody').innerHTML=rows.length?rows.map(x=>`<tr>
+    <td>${x.name}</td><td class="num">${x.shifts}</td>
+    <td class="num">${x.roles['1ST']}</td><td class="num">${x.roles['2D']}</td><td class="num">${x.roles['TRIMMING']}</td>
+    <td class="num">${fmt(x.actual)}</td></tr>`).join('')
+    :`<tr><td colspan="6" class="empty">No matching operators.</td></tr>`;
+}
+function sortOps(k){ sortO.d = sortO.k===k? -sortO.d : (k==='name'?1:-1); sortO.k=k; renderOps(); }
+
+/* ----- DOWNTIME ----- */
+function renderDowntime(){
+  const dt=DATA.downtime, k=DATA.kpis;
+  const topCause=dt[0]?dt[0].type+' ('+dt[0].mins+'m)':'—';
+  document.getElementById('dtKpis').innerHTML=`
+    <div class="kpi red"><span class="strip"></span><div class="lbl">Total Downtime</div><div class="val">${k.downHours}h</div><div class="sub">${fmt(k.totalDownMin)} minutes</div></div>
+    <div class="kpi amber"><span class="strip"></span><div class="lbl">Top Cause</div><div class="val" style="font-size:20px">${dt[0]?dt[0].type:'—'}</div><div class="sub">${dt[0]?dt[0].mins+' min':''}</div></div>
+    <div class="kpi blue"><span class="strip"></span><div class="lbl">Distinct Causes</div><div class="val">${dt.length}</div><div class="sub">recorded stoppage types</div></div>`;
+  killChart('chDtType');
+  CHARTS.chDtType=new Chart(document.getElementById('chDtType'),{
+    type:'bar',
+    data:{labels:dt.map(x=>x.type),datasets:[{data:dt.map(x=>x.mins),
+      backgroundColor:['#f85149','#ffb020','#58a6ff','#39c5cf','#3fb950'],borderRadius:4}]},
+    options:{maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:GRID,ticks:TICK},y:{grid:GRID,ticks:TICK,beginAtZero:true}}}
+  });
+  killChart('chDtDay');
+  const d=DATA.days;
+  CHARTS.chDtDay=new Chart(document.getElementById('chDtDay'),{
+    type:'bar',
+    data:{labels:d.map(x=>x.label),datasets:[{data:d.map(x=>x.down),backgroundColor:'#f8514999',borderRadius:3}]},
+    options:{maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:GRID,ticks:TICK},y:{grid:GRID,ticks:TICK,beginAtZero:true}}}
+  });
+}
+
+/* ----- DAY LOG ----- */
+function fillLogFilters(){
+  const ls=document.getElementById('logLine'), ds=document.getElementById('logDate');
+  ls.innerHTML='<option value="">All lines</option>'+DATA.lines.map(x=>`<option>${x.line}</option>`).join('');
+  const dates=[...new Set(DATA.raw.map(r=>r.date))].sort();
+  ds.innerHTML='<option value="">All dates</option>'+dates.map(d=>`<option value="${d}">${d}</option>`).join('');
+}
+function sortLog(k){ sortL.d = sortL.k===k? -sortL.d : 1; sortL.k=k; renderLog(); }
+function clearLog(){ document.getElementById('logSearch').value=''; document.getElementById('logLine').value='';
+  document.getElementById('logDate').value=''; logState={line:'',date:''}; renderLog(); }
+function renderLog(){
+  const q=document.getElementById('logSearch').value.toLowerCase().trim();
+  const line=document.getElementById('logLine').value, date=document.getElementById('logDate').value;
+  let rows=DATA.raw.filter(r=>{
+    if(line && r.line!==line) return false;
+    if(date && r.date!==date) return false;
+    if(q){ const hay=(r.part+' '+r.line+' '+r.opt1+' '+r.opt2+' '+r.opt3).toLowerCase(); if(!hay.includes(q))return false; }
+    return true;
+  });
+  rows.sort((a,b)=>{const A=a[sortL.k],B=b[sortL.k];return (A<B?-1:A>B?1:0)*sortL.d;});
+  document.querySelector('#logTbl tbody').innerHTML=rows.length?rows.map(r=>`<tr>
+    <td>${r.date}</td><td>${r.line}</td><td>${r.part}</td>
+    <td class="num">${fmt(r.plan)}</td><td class="num">${fmt(r.actual)}</td><td>${attPill(r.attain)}</td>
+    <td class="num">${fmt(r.t12)}</td><td class="num">${fmt(r.t16)}</td><td class="num">${fmt(r.t19)}</td>
+    <td>${r.opt1||'—'}</td><td>${r.opt2||'—'}</td><td>${r.opt3||'—'}</td><td class="num">${r.downMin||0}</td></tr>`).join('')
+    :`<tr><td colspan="13" class="empty">No rows match.</td></tr>`;
+}
+
+/* ================== REPORTS ================== */
+function setReport(t,btn){ curReport=t;
+  document.querySelectorAll('.rep-controls button:not(.print)').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); buildReport(); }
+function buildReport(){ if(!DATA)return;
+  const A=document.getElementById('reportArea');
+  if(curReport==='monthly')A.innerHTML=repMonthly();
+  else if(curReport==='daily')A.innerHTML=repDaily();
+  else A.innerHTML=repLine();
+}
+function repHead(title){
+  return `<div class="rhead"><div><h1>Shree Pressing — Magnet Case</h1>
+    <div style="font-size:13px;color:#555">${title}</div></div>
+    <div class="r">Month: <b>${DATA.month}</b><br>Generated: ${DATA.generated}</div></div>`;
+}
+function repSign(){
+  return `<div class="sign"><div>Prepared by</div><div>Production Head</div><div>Director</div></div>`;
+}
+function repMonthly(){
+  const k=DATA.kpis;
+  const lineRows=DATA.lines.map(x=>`<tr><td>${x.line}</td><td style="text-align:right">${fmt(x.plan)}</td>
+    <td style="text-align:right">${fmt(x.actual)}</td><td style="text-align:right">${x.attain}%</td>
+    <td style="text-align:right">${x.down}</td></tr>`).join('');
+  const topParts=DATA.parts.slice(0,8).map(x=>`<tr><td>${x.part}</td><td style="text-align:right">${fmt(x.actual)}</td>
+    <td style="text-align:right">${x.attain}%</td></tr>`).join('');
+  const dt=DATA.downtime.map(x=>`<tr><td>${x.type}</td><td style="text-align:right">${x.mins} min</td></tr>`).join('');
+  return repHead('Monthly Production Summary')+`
+    <div class="kgrid">
+      <div class="kbox"><div class="l">Plan Attainment</div><div class="v">${k.attain}%</div></div>
+      <div class="kbox"><div class="l">Total Output</div><div class="v">${fmt(k.totalActual)}</div></div>
+      <div class="kbox"><div class="l">Avg / Day</div><div class="v">${fmt(k.avgPerDay)}</div></div>
+      <div class="kbox"><div class="l">Downtime</div><div class="v">${k.downHours}h</div></div>
+    </div>
+    <p style="color:#555;font-size:12px">Active production days: ${k.activeDays} · Best ${k.bestDay?k.bestDay.label+' ('+k.bestDay.attain+'%)':'—'} · Weakest ${k.worstDay?k.worstDay.label+' ('+k.worstDay.attain+'%)':'—'}</p>
+    <h2>Line Performance</h2>
+    <table><thead><tr><th>Line</th><th style="text-align:right">Plan</th><th style="text-align:right">Actual</th><th style="text-align:right">Attain</th><th style="text-align:right">Down (min)</th></tr></thead><tbody>${lineRows}</tbody></table>
+    <h2>Top Parts by Output</h2>
+    <table><thead><tr><th>Part</th><th style="text-align:right">Actual</th><th style="text-align:right">Attain</th></tr></thead><tbody>${topParts}</tbody></table>
+    <h2>Downtime by Cause</h2>
+    <table><thead><tr><th>Cause</th><th style="text-align:right">Minutes</th></tr></thead><tbody>${dt||'<tr><td colspan=2>None recorded</td></tr>'}</tbody></table>
+    `+repSign();
+}
+function repDaily(){
+  const rows=DATA.lastRows||[]; let plan=0,act=0,down=0;
+  rows.forEach(r=>{plan+=r.plan;act+=r.actual;down+=r.downMin;});
+  const att=plan?Math.round(act/plan*1000)/10:0;
+  const body=rows.map(r=>`<tr><td>${r.line}</td><td>${r.part}</td><td style="text-align:right">${fmt(r.plan)}</td>
+    <td style="text-align:right">${fmt(r.actual)}</td><td style="text-align:right">${r.attain}%</td>
+    <td>${[r.opt1,r.opt2,r.opt3].filter(Boolean).join(', ')||'—'}</td>
+    <td style="text-align:right">${r.downMin||0}</td></tr>`).join('');
+  return repHead('Daily Production Report — '+(DATA.lastDate||''))+`
+    <div class="kgrid">
+      <div class="kbox"><div class="l">Attainment</div><div class="v">${att}%</div></div>
+      <div class="kbox"><div class="l">Output</div><div class="v">${fmt(act)}</div></div>
+      <div class="kbox"><div class="l">Plan</div><div class="v">${fmt(plan)}</div></div>
+      <div class="kbox"><div class="l">Downtime</div><div class="v">${down}m</div></div>
+    </div>
+    <h2>Line Detail</h2>
+    <table><thead><tr><th>Line</th><th>Part</th><th style="text-align:right">Plan</th><th style="text-align:right">Actual</th><th style="text-align:right">Attain</th><th>Operators</th><th style="text-align:right">Down</th></tr></thead>
+    <tbody>${body||'<tr><td colspan=7>No data</td></tr>'}</tbody></table>`+repSign();
+}
+function repLine(){
+  const body=DATA.lines.map(x=>{
+    const flag=x.attain>=95?'On target':x.attain>=80?'Watch':'Below target';
+    return `<tr><td>${x.line}</td><td style="text-align:right">${fmt(x.plan)}</td><td style="text-align:right">${fmt(x.actual)}</td>
+      <td style="text-align:right">${x.attain}%</td><td style="text-align:right">${x.down}</td>
+      <td style="text-align:right">${x.activeDays}</td><td>${flag}</td></tr>`;
+  }).join('');
+  return repHead('Line Scorecard')+`
+    <h2>Per-Line Monthly Scorecard</h2>
+    <table><thead><tr><th>Line</th><th style="text-align:right">Plan</th><th style="text-align:right">Actual</th>
+    <th style="text-align:right">Attain</th><th style="text-align:right">Down (min)</th><th style="text-align:right">Active days</th><th>Status</th></tr></thead>
+    <tbody>${body}</tbody></table>
+    <p style="color:#555;font-size:12px;margin-top:12px">Status: On target ≥95% · Watch 80–94% · Below target &lt;80%.</p>`+repSign();
+}
+</script>
+</body>
+</html>
