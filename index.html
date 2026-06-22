@@ -316,6 +316,7 @@ td.num,th.num{font-family:var(--mono);text-align:right}
     <div class="foot">
       <div class="live"><span class="pulse"></span>Live · auto-refresh on</div>
       <div id="footMeta">—</div>
+      <div id="sessionMeta" style="font-size:11px;color:var(--dim);margin-top:4px"></div>
       <button onclick="logout()">Sign out</button>
     </div>
   </aside>
@@ -348,7 +349,8 @@ td.num,th.num{font-family:var(--mono);text-align:right}
             <span style="font-size:18px">⛗</span>
             <div style="flex:1">
               <div style="font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:#9fc0e3;font-weight:700">SP L15 Magnet Case dispatched <span id="dispStripDate"></span></div>
-              <div style="font-family:var(--mono);font-size:22px;font-weight:700;margin-top:2px"><span id="dispStripQty">0</span> <span style="font-size:12px;color:#cfe2f4;font-family:var(--sans)">pcs FG out yesterday</span></div>
+              <div style="font-family:var(--mono);font-size:22px;font-weight:700;margin-top:2px"><span id="dispStripQty">0</span> <span id="dispStripWhen" style="font-size:12px;color:#cfe2f4;font-family:var(--sans)">pcs FG out</span></div>
+              <div id="dispStripVs" style="font-size:11.5px;color:#9fc0e3;margin-top:3px"></div>
             </div>
             <div id="dispStripCodes" style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:55%"></div>
             <button onclick="jump('dispatch')" style="background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:8px;padding:8px 13px;font-weight:700;font-size:12px;white-space:nowrap">View all →</button>
@@ -579,6 +581,8 @@ td.num,th.num{font-family:var(--mono);text-align:right}
           <button class="active" id="rb-monthly" onclick="setReport('monthly',this)">Monthly Summary</button>
           <button id="rb-daily" onclick="setReport('daily',this)">Latest-Day Report</button>
           <button id="rb-line" onclick="setReport('line',this)">Line Scorecard</button>
+          <button id="rb-dispatch" onclick="setReport('dispatch',this)">Dispatch Report</button>
+          <button id="rb-pvd" onclick="setReport('pvd',this)">Production vs Dispatch</button>
           <button id="rb-range" onclick="setReport('range',this)">Custom Date Range</button>
           <button class="print" onclick="window.print()">🖶 Print / Save PDF</button>
         </div>
@@ -611,8 +615,18 @@ td.num,th.num{font-family:var(--mono);text-align:right}
    Logins are now checked securely in the Apps Script (.gs) — passwords are
    never stored in this file. Manage users in the USERS map inside the .gs.
    ============================================================================ */
-const API_URL = "https://script.google.com/macros/s/AKfycbwEQWHpAVjdjV2XwkZxyCh-6W9-M9r5l1f2h8QFdbiUnQ_Xa_7UiTs21spzzoRXWAW1/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbx-r9GcfLPFiUAqKPB_6pPg5w5MU6fzdOtcF5CyToR71y-aRl7euUzsmy7pr6E8q95k/exec";
 const REFRESH_SECONDS = 10;                 // <-- change refresh interval here (seconds)
+
+/* ---- SESSION / AUTO-LOGOUT ----
+   The dashboard signs the user out automatically:
+     • SESSION_MAX_MIN   — a hard cap from the moment of login (e.g. 60 = exactly one hour),
+                           regardless of activity. This is the "open for 1 hour -> logged out" rule.
+     • IDLE_LOGOUT_MIN   — also signs out after this many minutes of NO interaction (mouse/key/touch),
+                           so an unattended floor screen doesn't sit logged-in forever.
+   Set either to 0 to disable that particular rule. */
+const SESSION_MAX_MIN = 60;                 // absolute session length (minutes) — 1 hour
+const IDLE_LOGOUT_MIN = 20;                 // idle timeout (minutes); 0 to disable
 
 /* ================== STATE ================== */
 let DATA=null, YEAR_DATA=null, CHARTS={}, sortP={k:'actual',d:-1}, sortO={k:'shifts',d:-1}, sortL={k:'date',d:1};
@@ -629,20 +643,90 @@ function doLogin(){
   err.textContent='Checking…';
   fetch(API_URL+'?action=login&user='+encodeURIComponent(u)+'&pass='+encodeURIComponent(p))
     .then(r=>r.json()).then(d=>{
-      if(d.ok){ sessionStorage.setItem('mc_user',u); sessionStorage.setItem('mc_token',d.token||''); enterApp(); }
+      if(d.ok){
+        sessionStorage.setItem('mc_user',u);
+        sessionStorage.setItem('mc_token',d.token||'');
+        sessionStorage.setItem('mc_login_at', String(Date.now()));   // session start stamp
+        enterApp();
+      }
       else err.textContent=d.error||'Login failed';
     }).catch(()=>err.textContent='Cannot reach server. Check API_URL / deployment.');
 }
 document.getElementById('pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('user').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('pass').focus();});
-if(sessionStorage.getItem('mc_user')){ window.addEventListener('load',enterApp); }
-function logout(){ sessionStorage.removeItem('mc_user'); stopAutoRefresh(); location.reload(); }
+
+// On reload: only restore the session if it hasn't already exceeded the hard cap.
+if(sessionStorage.getItem('mc_user')){
+  const startedAt=parseInt(sessionStorage.getItem('mc_login_at')||'0',10);
+  const ageMin=(Date.now()-startedAt)/60000;
+  if(SESSION_MAX_MIN>0 && startedAt && ageMin>=SESSION_MAX_MIN){
+    // stale session — clear it and show the login screen
+    sessionStorage.removeItem('mc_user'); sessionStorage.removeItem('mc_token'); sessionStorage.removeItem('mc_login_at');
+  } else {
+    window.addEventListener('load',enterApp);
+  }
+}
+
+function logout(reason){
+  sessionStorage.removeItem('mc_user'); sessionStorage.removeItem('mc_token'); sessionStorage.removeItem('mc_login_at');
+  stopAutoRefresh(); stopSessionWatch();
+  if(reason){ try{ sessionStorage.setItem('mc_logout_reason', reason); }catch(e){} }
+  location.reload();
+}
 
 function enterApp(){
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
+  // if there's no login stamp (e.g. restored older session), stamp now so the cap still applies
+  if(!sessionStorage.getItem('mc_login_at')) sessionStorage.setItem('mc_login_at', String(Date.now()));
+  startSessionWatch();
   loadMonths();
 }
+
+/* ================== SESSION WATCH (idle + absolute timeout) ================== */
+let sessionTimer=null, lastActivity=Date.now();
+function markActivity(){ lastActivity=Date.now(); }
+function startSessionWatch(){
+  stopSessionWatch();
+  lastActivity=Date.now();
+  ['mousemove','mousedown','keydown','touchstart','scroll','click'].forEach(ev=>
+    document.addEventListener(ev, markActivity, {passive:true}));
+  // check once per 15s — cheap, and precise enough for minute-scale limits
+  sessionTimer=setInterval(()=>{
+    const startedAt=parseInt(sessionStorage.getItem('mc_login_at')||'0',10);
+    const sessionMin=startedAt?(Date.now()-startedAt)/60000:0;
+    const idleMin=(Date.now()-lastActivity)/60000;
+    if(SESSION_MAX_MIN>0 && sessionMin>=SESSION_MAX_MIN){ logout('session'); return; }
+    if(IDLE_LOGOUT_MIN>0 && idleMin>=IDLE_LOGOUT_MIN){ logout('idle'); return; }
+    paintSessionMeta(startedAt);
+  },15000);
+  paintSessionMeta();
+}
+function stopSessionWatch(){
+  if(sessionTimer)clearInterval(sessionTimer); sessionTimer=null;
+  ['mousemove','mousedown','keydown','touchstart','scroll','click'].forEach(ev=>
+    document.removeEventListener(ev, markActivity));
+}
+function paintSessionMeta(startedAt){
+  const el=document.getElementById('sessionMeta'); if(!el) return;
+  startedAt=startedAt||parseInt(sessionStorage.getItem('mc_login_at')||'0',10);
+  if(!startedAt||SESSION_MAX_MIN<=0){ el.textContent=''; return; }
+  const leftMin=Math.max(0,Math.ceil(SESSION_MAX_MIN-(Date.now()-startedAt)/60000));
+  el.textContent='Session ends in '+leftMin+' min';
+}
+// Show a small notice on the login screen explaining why the user was signed out.
+(function(){
+  const reason=sessionStorage.getItem('mc_logout_reason');
+  if(reason){
+    sessionStorage.removeItem('mc_logout_reason');
+    window.addEventListener('load',()=>{
+      const err=document.getElementById('loginErr');
+      if(err) err.textContent = reason==='idle'
+        ? 'Signed out after inactivity. Please log in again.'
+        : 'Session expired after '+SESSION_MAX_MIN+' minutes. Please log in again.';
+    });
+  }
+})();
 
 /* ================== AUTO-REFRESH ================== */
 function startAutoRefresh(){
@@ -727,12 +811,16 @@ function renderAll(){
 /* ----- OVERVIEW KPIs ----- */
 function renderKpis(){
   const k=DATA.kpis;
+  const td=DATA.tillDate||{producedAllTime:0,dispatchedAllTime:0};
+  const disp=(DATA&&DATA.dispatch&&DATA.dispatch.ok)?DATA.dispatch:null;
   const cards=[
     {c:'steel',i:'◎',l:'Plan Achievement',v:k.achieve+'%',s:`${fmt(k.totalActual)} of ${fmt(k.totalPlan)} planned`,t:'overview'},
-    {c:'green',i:'▲',l:'Total Output',v:fmt(k.totalActual),s:`avg ${fmt(k.avgPerDay)}/day · ${k.activeDays} days`},
+    {c:'green',i:'▲',l:'Total Output (month)',v:fmt(k.totalActual),s:`avg ${fmt(k.avgPerDay)}/day · ${k.activeDays} days`},
+    {c:'steel',i:'∑',l:'Produced — Till Date',v:fmt(td.producedAllTime),s:'all months on record',t:'year'},
+    {c:'amber',i:'⛗',l:'Latest Dispatch',v:disp?fmt(disp.totalQty):'—',s:disp?('FG out · '+(disp.date||'')):'no dispatch yet',t:'dispatch'},
+    {c:'violet',i:'⇄',l:'Dispatched — Till Date',v:fmt(td.dispatchedAllTime),s:'all FG shipped',t:'pvd'},
     {c:'teal',i:'▤',l:'Lines Running',v:k.linesCount,s:'active production lines',t:'lines'},
     {c:'red',i:'⚠',l:'Downtime',v:k.downHours+'h',s:`${fmt(k.totalDownMin)} min logged`,t:'downtime'},
-    {c:'violet',i:'☖',l:'Manpower (month)',v:fmt(k.manpower),s:'shift-slots worked',t:'operators'},
     {c:'amber',i:'▼',l:'Weakest Day',v:k.worstDay?k.worstDay.achieve+'%':'—',s:k.worstDay?k.worstDay.label:'',t:'overview'},
   ];
   document.getElementById('kpiRow').innerHTML=cards.map(c=>`
@@ -754,8 +842,15 @@ function balancedCols(n){
 function renderLiveToday(){
   const t=DATA.todaySlot||{by12:0,by4:0,by7:0,t12:0,t16:0,t19:0,plan:0,actual:0,down:0};
   const dlabel=DATA.lastDate||'—';
-  document.getElementById('todayDateInline').textContent = dlabel? '· '+dlabel : '';
-  document.getElementById('todayBadgeDate').textContent = 'Latest filled: '+dlabel;
+  const today=DATA.serverDate||dlabel;
+  // Section header shows TODAY'S real date (from the server clock) — independent of whether today's
+  // data has been filled yet. "Latest filled" keeps the actual most-recent data date.
+  document.getElementById('todayDateInline').textContent = today? '· '+today : '';
+  const filledToday=(dlabel===today);
+  const badge=document.getElementById('todayBadgeDate');
+  badge.textContent = filledToday
+    ? ('Latest filled: '+dlabel)
+    : ('Latest filled: '+dlabel+'  ·  awaiting today\u2019s entry');
   // slot checkpoint cards — cumulative "upto" totals across all lines
   const dayPct = t.plan?Math.round((t.actual)/t.plan*100):0;
   document.getElementById('slotsStrip').innerHTML=`
@@ -1075,9 +1170,36 @@ function paintDispStrip(){
   wrap.style.display='block';
   document.getElementById('dispStripDate').textContent=d.date?('· '+d.date):'';
   document.getElementById('dispStripQty').textContent=fmt(d.totalQty);
+  // "yesterday" only if the dispatch date is genuinely the day before the server's today.
+  const lbl=document.getElementById('dispStripWhen');
+  if(lbl){
+    let txt='pcs FG out';
+    if(DATA.serverDate && d.date){
+      const diff=Math.round((new Date(DATA.serverDate)-new Date(d.date))/86400000);
+      txt = diff===1 ? 'pcs FG out yesterday'
+          : diff===0 ? 'pcs FG out today'
+          : 'pcs FG out on '+d.date;
+    }
+    lbl.textContent=txt;
+  }
   document.getElementById('dispStripCodes').innerHTML=d.byCode.slice(0,6).map(c=>
     `<span style="background:rgba(255,255,255,.14);border-radius:7px;padding:4px 9px;font-size:11.5px;font-weight:600">${(c.code==='—'||!c.code)?'?':c.code} <b style="font-family:var(--mono)">${fmt(c.qty)}</b></span>`
   ).join('');
+  // context: dispatch vs the production made on the same date + running till-date totals
+  const vs=document.getElementById('dispStripVs');
+  if(vs){
+    let parts=[];
+    const prodSame=(DATA.days||[]).find(x=>x.date===d.date);
+    if(prodSame){
+      const net=prodSame.actual-d.totalQty;
+      parts.push('produced '+fmt(prodSame.actual)+' that day · net '+(net>=0?'+':'')+fmt(net));
+    }
+    const td=DATA.tillDate;
+    if(td){
+      parts.push('till date: '+fmt(td.producedAllTime)+' produced / '+fmt(td.dispatchedAllTime)+' dispatched');
+    }
+    vs.textContent=parts.join('   ·   ');
+  }
 }
 
 function renderDispatch(){
@@ -1090,7 +1212,7 @@ function renderDispatch(){
   if(!d || !d.ok || !d.lineCount){
     inline.textContent='';
     kp.innerHTML='';
-    grid.innerHTML='<div class="empty" style="grid-column:1/-1">No dispatch imported yet. The 7:15 AM job writes here each morning — or run importDispatch once in Apps Script to test.</div>';
+    grid.innerHTML='<div class="empty" style="grid-column:1/-1">No dispatch imported yet. It loads automatically each morning, or use the "🚚 Dispatch → Import latest dispatch now" menu in the Google Sheet.</div>';
     tb.innerHTML='<tr><td colspan="5" class="empty">No dispatch records.</td></tr>';
     return;
   }
@@ -1130,6 +1252,8 @@ function loadPVD(silent){
       document.getElementById('pvdLoading').style.display='none';
       document.getElementById('pvdBody').style.display='block';
       renderPVD();
+      // if the Reports tab is showing the Production-vs-Dispatch report, refresh it too
+      if(curReport==='pvd' && document.getElementById('reports').style.display==='block'){ buildReport(); }
     }).catch(()=>{ document.getElementById('pvdLoading').textContent='Network error loading comparison.'; });
 }
 function netCell(n){
@@ -1198,6 +1322,11 @@ function setReport(t,btn){ curReport=t;
 function buildReport(){
   const A=document.getElementById('reportArea');
   if(curReport==='range'){ A.innerHTML = RANGE_DATA?repRange():repRangePrompt(); return; }
+  if(curReport==='dispatch'){ A.innerHTML = DATA?repDispatch():''; return; }
+  if(curReport==='pvd'){
+    if(!PVD_DATA){ A.innerHTML='<div style="text-align:center;padding:40px;color:#888">Loading production-vs-dispatch…</div>'; loadPVD(true); return; }
+    A.innerHTML = repPVD(); return;
+  }
   if(!DATA){ A.innerHTML=''; return; }
   A.innerHTML = curReport==='monthly'?repMonthly() : curReport==='daily'?repDaily() : repLine();
 }
@@ -1327,6 +1456,72 @@ function repRange(){
     <table><thead><tr><th>Cause</th><th style="text-align:right">Minutes</th></tr></thead><tbody>${dt||'<tr><td colspan=2>None recorded</td></tr>'}</tbody></table>
     `+repSign();
 }
-</script>
+
+/* ---- DISPATCH REPORT (latest dispatch day, SP L15 Magnet Case FG) ---- */
+function repDispatch(){
+  const d=(DATA&&DATA.dispatch)?DATA.dispatch:null;
+  const head=`<div class="rhead"><div><h1>Shree Pressing — Magnet Case</h1>
+    <div style="font-size:13px;color:#555">Dispatch Report — SP L15 FG Magnet Case</div></div>
+    <div class="r">Dispatch date: <b>${(d&&d.date)||'—'}</b><br>Generated: ${DATA.generated}</div></div>`;
+  if(!d||!d.ok||!d.lineCount){
+    return head+`<p style="color:#777;padding:18px 0">No dispatch records on file yet.</p>`+repSign();
+  }
+  const codeRows=d.byCode.map(c=>`<tr><td>${c.code==='—'?'Uncoded':c.code}</td>
+    <td style="text-align:right">${fmt(c.qty)}</td>
+    <td style="text-align:right">₹${fmt(Math.round(c.amount))}</td>
+    <td style="text-align:right">${c.items.length}</td></tr>`).join('');
+  const lineRows=d.rows.map(r=>`<tr><td>${r.code==='—'?'uncoded':r.code}</td><td>${r.item}</td>
+    <td style="text-align:right">${fmt(r.qty)}</td><td style="text-align:right">₹${fmt(Math.round(r.amount))}</td>
+    <td>${r.customer||'—'}</td></tr>`).join('');
+  const td=DATA.tillDate||{};
+  return head+`
+    <div class="kgrid">
+      <div class="kbox"><div class="l">Dispatched (this day)</div><div class="v">${fmt(d.totalQty)}</div></div>
+      <div class="kbox"><div class="l">Dispatch Value</div><div class="v">₹${fmt(Math.round(d.totalAmount))}</div></div>
+      <div class="kbox"><div class="l">Distinct Parts</div><div class="v">${d.byCode.length}</div></div>
+      <div class="kbox"><div class="l">Dispatched — Till Date</div><div class="v">${fmt(td.dispatchedAllTime||d.tillDateQty||0)}</div></div>
+    </div>
+    <h2>Dispatched by Part Code</h2>
+    <table><thead><tr><th>Code</th><th style="text-align:right">Qty</th><th style="text-align:right">Net Amount</th><th style="text-align:right">Order lines</th></tr></thead><tbody>${codeRows}</tbody></table>
+    <h2>Full Dispatch Detail</h2>
+    <table><thead><tr><th>Code</th><th>Item Description</th><th style="text-align:right">Qty</th><th style="text-align:right">Net Amount</th><th>Customer</th></tr></thead><tbody>${lineRows}</tbody></table>
+    `+repSign();
+}
+
+/* ---- PRODUCTION vs DISPATCH REPORT (uses PVD_DATA) ---- */
+function repPVD(){
+  const D=PVD_DATA; if(!D) return '';
+  const t=D.totals;
+  const head=`<div class="rhead"><div><h1>Shree Pressing — Magnet Case</h1>
+    <div style="font-size:13px;color:#555">Production vs Dispatch — ${D.dayMonth}</div></div>
+    <div class="r">Generated: ${D.generated}</div></div>`;
+  const dayRows=(D.dayWise||[]).map(x=>`<tr><td>${x.label}</td>
+    <td style="text-align:right">${fmt(x.produced)}</td><td style="text-align:right">${fmt(x.dispatched)}</td>
+    <td style="text-align:right">${(x.net>0?'+':'')+fmt(x.net)}</td>
+    <td style="text-align:right">${x.produced?x.ratio+'%':'—'}</td></tr>`).join('');
+  const monRows=(D.monthWise||[]).map(x=>`<tr><td>${x.label}</td>
+    <td style="text-align:right">${fmt(x.produced)}</td><td style="text-align:right">${fmt(x.dispatched)}</td>
+    <td style="text-align:right">${(x.net>0?'+':'')+fmt(x.net)}</td>
+    <td style="text-align:right">${x.ratio}%</td></tr>`).join('');
+  const codeRows=(D.byCode||[]).map(x=>`<tr><td>${x.code==='—'?'Uncoded':x.code}</td>
+    <td style="text-align:right">${fmt(x.produced)}</td><td style="text-align:right">${fmt(x.dispatched)}</td>
+    <td style="text-align:right">${(x.net>0?'+':'')+fmt(x.net)}</td>
+    <td style="text-align:right">${x.produced?x.ratio+'%':'—'}</td></tr>`).join('');
+  return head+`
+    <div class="kgrid">
+      <div class="kbox"><div class="l">Produced (month)</div><div class="v">${fmt(t.produced)}</div></div>
+      <div class="kbox"><div class="l">Dispatched (month)</div><div class="v">${fmt(t.dispatched)}</div></div>
+      <div class="kbox"><div class="l">Net Stock Δ</div><div class="v">${(t.net>0?'+':'')+fmt(t.net)}</div></div>
+      <div class="kbox"><div class="l">Dispatch / Produced</div><div class="v">${t.ratio}%</div></div>
+    </div>
+    <p style="color:#555;font-size:12px">Net = produced − dispatched. Positive = built to stock; negative = shipped from earlier stock.</p>
+    <h2>Day-by-day (this month)</h2>
+    <table><thead><tr><th>Date</th><th style="text-align:right">Produced</th><th style="text-align:right">Dispatched</th><th style="text-align:right">Net</th><th style="text-align:right">Disp/Prod</th></tr></thead><tbody>${dayRows||'<tr><td colspan=5>No data</td></tr>'}</tbody></table>
+    <h2>By Part Code (this month)</h2>
+    <table><thead><tr><th>Code</th><th style="text-align:right">Produced</th><th style="text-align:right">Dispatched</th><th style="text-align:right">Net</th><th style="text-align:right">Disp/Prod</th></tr></thead><tbody>${codeRows||'<tr><td colspan=5>No data</td></tr>'}</tbody></table>
+    <h2>Month-by-month (year)</h2>
+    <table><thead><tr><th>Month</th><th style="text-align:right">Produced</th><th style="text-align:right">Dispatched</th><th style="text-align:right">Net</th><th style="text-align:right">Disp/Prod</th></tr></thead><tbody>${monRows||'<tr><td colspan=5>No data</td></tr>'}</tbody></table>
+    `+repSign();
+}</script>
 </body>
 </html>
