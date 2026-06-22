@@ -424,6 +424,7 @@ td.num,th.num{font-family:var(--mono);text-align:right}
             <th class="num" onclick="sortParts('plan')">Plan</th>
             <th class="num" onclick="sortParts('actual')">Actual</th>
             <th onclick="sortParts('achieve')">Achieve</th>
+            <th class="num">Dispatched (mo)</th>
             <th class="num" onclick="sortParts('runs')">Runs</th>
           </tr></thead><tbody></tbody></table>
         </div>
@@ -454,8 +455,9 @@ td.num,th.num{font-family:var(--mono);text-align:right}
         <div class="kpis" id="dtKpis"></div>
         <div class="grid2" style="margin-top:16px">
           <div class="panel"><h4>Downtime by Cause (min)</h4><div class="chartbox"><canvas id="chDtType"></canvas></div></div>
-          <div class="panel"><h4>Downtime by Day (min)</h4><div class="chartbox"><canvas id="chDtDay"></canvas></div></div>
+          <div class="panel"><h4>Downtime by Day (min)</h4><div class="hint">Click any day to see who produced what and the 4M reasons logged.</div><div class="chartbox"><canvas id="chDtDay"></canvas></div></div>
         </div>
+        <div class="panel" id="dtDayPanel" style="margin-top:16px;display:none"></div>
       </section>
 
       <!-- PRODUCTION vs DISPATCH -->
@@ -615,7 +617,7 @@ td.num,th.num{font-family:var(--mono);text-align:right}
    Logins are now checked securely in the Apps Script (.gs) — passwords are
    never stored in this file. Manage users in the USERS map inside the .gs.
    ============================================================================ */
-const API_URL = "https://script.google.com/macros/s/AKfycbx-r9GcfLPFiUAqKPB_6pPg5w5MU6fzdOtcF5CyToR71y-aRl7euUzsmy7pr6E8q95k/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyX-cDH4cHQqGYAespGigczFKcxCqConhbwbAkPrJE_lrCPzwV4F3ej2WBFyY7JrQUR/exec";
 const REFRESH_SECONDS = 10;                 // <-- change refresh interval here (seconds)
 
 /* ---- SESSION / AUTO-LOGOUT ----
@@ -625,8 +627,8 @@ const REFRESH_SECONDS = 10;                 // <-- change refresh interval here 
      • IDLE_LOGOUT_MIN   — also signs out after this many minutes of NO interaction (mouse/key/touch),
                            so an unattended floor screen doesn't sit logged-in forever.
    Set either to 0 to disable that particular rule. */
-const SESSION_MAX_MIN = 60;                 // absolute session length (minutes) — 1 hour
-const IDLE_LOGOUT_MIN = 20;                 // idle timeout (minutes); 0 to disable
+const SESSION_MAX_MIN = 30;                 // absolute session length (minutes) — 1 hour
+const IDLE_LOGOUT_MIN = 15;                 // idle timeout (minutes); 0 to disable
 
 /* ================== STATE ================== */
 let DATA=null, YEAR_DATA=null, CHARTS={}, sortP={k:'actual',d:-1}, sortO={k:'shifts',d:-1}, sortL={k:'date',d:1};
@@ -839,9 +841,9 @@ function renderKpis(){
   const cards=[
     {c:'steel',i:'◎',l:'Plan Achievement',v:k.achieve+'%',s:`${fmt(k.totalActual)} of ${fmt(k.totalPlan)} planned`,t:'overview'},
     {c:'green',i:'▲',l:'Total Output (month)',v:fmt(k.totalActual),s:`avg ${fmt(k.avgPerDay)}/day · ${k.activeDays} days`},
+    {c:'violet',i:'⇄',l:'Dispatched — Till Date',v:fmt(td.dispatchedAllTime),s:'all FG shipped',t:'pvd'},
     {c:'steel',i:'∑',l:'Produced — Till Date',v:fmt(td.producedAllTime),s:'all months on record',t:'year'},
     {c:'amber',i:'⛗',l:'Latest Dispatch',v:disp?fmt(disp.totalQty):'—',s:disp?('FG out · '+(disp.date||'')):'no dispatch yet',t:'dispatch'},
-    {c:'violet',i:'⇄',l:'Dispatched — Till Date',v:fmt(td.dispatchedAllTime),s:'all FG shipped',t:'pvd'},
     {c:'teal',i:'▤',l:'Lines Running',v:k.linesCount,s:'active production lines',t:'lines'},
     {c:'red',i:'⚠',l:'Downtime',v:k.downHours+'h',s:`${fmt(k.totalDownMin)} min logged`,t:'downtime'},
     {c:'amber',i:'▼',l:'Weakest Day',v:k.worstDay?k.worstDay.achieve+'%':'—',s:k.worstDay?k.worstDay.label:'',t:'overview'},
@@ -1039,18 +1041,43 @@ function renderPartsChart(){
   });
 }
 function sortParts(k){ sortP.d = sortP.k===k? -sortP.d : (k==='part'?1:-1); sortP.k=k; renderParts(); }
+// Map a production PART label to its dispatch code (mirror of backend prodPartToCode_),
+// so the Parts tab can line up "dispatched this month" against each part.
+function partToCode(part){
+  const s=String(part||'').toUpperCase().replace(/[\s\-]+/g,'');
+  if(!s) return '\u2014';
+  if(s.indexOf('K1K2')>=0) return 'K1K2';
+  if(s.indexOf('K1')>=0 && s.indexOf('K2')<0) return 'K1';
+  if(s.indexOf('P1')>=0) return 'P1';
+  if(s.indexOf('TVS')>=0) return 'TVS';
+  if(s.indexOf('HERO')>=0) return 'HERO';
+  if(s.indexOf('JUPITER')>=0) return 'JUPITER';
+  if(s.indexOf('KTM')>=0) return 'KTM';
+  if(s.indexOf('ISG')>=0) return 'ISG';
+  if(s.indexOf('JY')>=0) return 'JY';
+  if(s.indexOf('RE')>=0) return 'RE';
+  if(s.indexOf('AP')>=0) return 'AP';
+  if(s.indexOf('BR')>=0) return 'BR';
+  return s.slice(0,8);
+}
 function renderParts(){
   const q=document.getElementById('partSearch').value.toLowerCase().trim();
   let rows=DATA.parts.filter(x=>x.part.toLowerCase().includes(q));
   rows.sort((a,b)=>{const A=a[sortP.k],B=b[sortP.k];return (A<B?-1:A>B?1:0)*sortP.d;});
   document.getElementById('partFilterTag').innerHTML = q? `<span class="filter-tag">Filter: ${q} <b onclick="document.getElementById('partSearch').value='';renderParts()">✕</b></span>`:'';
   const max=Math.max(...DATA.parts.map(x=>x.actual),1);
-  document.querySelector('#partTbl tbody').innerHTML=rows.length?rows.map(x=>`<tr>
+  const disp=DATA.dispatchByCode||{};   // { CODE: dispatchedQtyThisMonth }
+  document.querySelector('#partTbl tbody').innerHTML=rows.length?rows.map(x=>{
+    const dq=disp[partToCode(x.part)]||0;
+    return `<tr>
     <td>${x.part}</td><td class="num">${fmt(x.plan)}</td>
     <td class="num"><div style="display:flex;align-items:center;gap:9px;justify-content:flex-end">
       ${fmt(x.actual)}<div class="bar" style="width:72px"><i style="width:${x.actual/max*100}%;background:#0d8a8a"></i></div></div></td>
-    <td>${achPill(x.achieve)}</td><td class="num">${x.runs}</td></tr>`).join('')
-    :`<tr><td colspan="5" class="empty">No matching parts.</td></tr>`;
+    <td>${achPill(x.achieve)}</td>
+    <td class="num" style="color:${dq?'#b35a00':'var(--dim)'};font-weight:${dq?'600':'400'}">${dq?fmt(dq):'—'}</td>
+    <td class="num">${x.runs}</td></tr>`;
+  }).join('')
+    :`<tr><td colspan="6" class="empty">No matching parts.</td></tr>`;
 }
 
 /* ----- OPERATORS ----- */
@@ -1093,8 +1120,48 @@ function renderDowntime(){
     type:'bar',
     data:{labels:d.map(x=>x.label),datasets:[{data:d.map(x=>x.down),backgroundColor:'#e7a3a0',borderRadius:3}]},
     options:{maintainAspectRatio:false,plugins:{legend:{display:false}},
+      onClick:(e,el)=>{ if(el.length){ showDtDay(d[el[0].index].date, d[el[0].index].label); } },
       scales:{x:{grid:{display:false},ticks:TICK},y:{grid:GRID,ticks:TICK,beginAtZero:true}}}
   });
+}
+
+// Drilldown: when a day is clicked in "Downtime by Day", show that day's line-by-line production
+// (who produced how much) and every 4M downtime reason with the exact note from the sheet.
+function showDtDay(dateKey, label){
+  const panel=document.getElementById('dtDayPanel');
+  const detail=(DATA.dayDetail||{})[dateKey]||[];
+  if(!detail.length){ panel.style.display='block'; panel.innerHTML=`<h4>${label||dateKey}</h4><div class="hint">No detail recorded for this day.</div>`; return; }
+  // production rows for the day
+  const prodRows=detail.map(r=>{
+    const ops=[r.op1,r.op2,r.op3].filter(Boolean).join(', ')||'—';
+    return `<tr><td>${r.line}</td><td>${r.part||'—'}</td><td class="num">${fmt(r.plan)}</td>
+      <td class="num">${fmt(r.actual)}</td><td>${achPill(r.achieve)}</td><td>${ops}</td></tr>`;
+  }).join('');
+  // 4M downtime reasons for the day (type + exact note from the sheet)
+  let reasonRows='';
+  detail.forEach(r=>{
+    (r.downReasons||[]).forEach(dr=>{
+      reasonRows+=`<tr><td>${r.line}</td><td>${dr.type}</td><td class="num">${dr.mins} min</td><td>${dr.note||'—'}</td></tr>`;
+    });
+  });
+  const dayProduced=detail.reduce((a,r)=>a+r.actual,0);
+  const dayDown=detail.reduce((a,r)=>a+r.downMin,0);
+  panel.style.display='block';
+  panel.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <h4 style="margin:0">Day detail — ${label||dateKey}</h4>
+      <div class="hint" style="margin:0">Produced <b>${fmt(dayProduced)}</b> · Downtime <b>${dayDown} min</b></div>
+    </div>
+    <div class="tbl-wrap" style="margin-top:12px">
+      <table><thead><tr><th>Line</th><th>Part</th><th class="num">Plan</th><th class="num">Actual</th><th>Achieve</th><th>Operators</th></tr></thead>
+      <tbody>${prodRows}</tbody></table>
+    </div>
+    <h4 style="margin:18px 0 8px">4M Downtime Reasons (as logged in sheet)</h4>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Line</th><th>Cause (4M)</th><th class="num">Minutes</th><th>Reason / note</th></tr></thead>
+      <tbody>${reasonRows||'<tr><td colspan="4" class="empty">No downtime logged this day.</td></tr>'}</tbody></table>
+    </div>`;
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 /* ----- DAY LOG ----- */
