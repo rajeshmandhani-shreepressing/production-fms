@@ -679,6 +679,9 @@ function enterApp(){
   document.getElementById('app').style.display='block';
   // if there's no login stamp (e.g. restored older session), stamp now so the cap still applies
   if(!sessionStorage.getItem('mc_login_at')) sessionStorage.setItem('mc_login_at', String(Date.now()));
+  // always land on the Overview tab on login, regardless of where a previous session left off
+  const ovBtn=document.querySelector('#nav button[data-tab="overview"]');
+  if(ovBtn) showTab(ovBtn);
   startSessionWatch();
   loadMonths();
 }
@@ -746,11 +749,18 @@ function paintMeta(){
 function loadMonths(){
   fetch(API_URL+'?action=months').then(r=>r.json()).then(d=>{
     const sel=document.getElementById('monthSel'); sel.innerHTML='';
-    (d.months||[]).forEach(m=>{
+    const months=d.months||[];
+    months.forEach(m=>{
       const o=document.createElement('option'); o.value=m.name;
       o.textContent=m.name+(m.hidden?' (archived)':''); sel.appendChild(o);
     });
-    if((d.months||[]).length){ loadMonth(sel.value); } else loadMonth('');
+    if(months.length){
+      // default to the current (newest) live month: the first non-archived tab,
+      // falling back to the newest tab if every tab happens to be archived
+      const live=months.find(m=>!m.hidden) || months[0];
+      sel.value=live.name;
+      loadMonth(sel.value);
+    } else loadMonth('');
   }).catch(()=>{ document.getElementById('loadingMain').textContent='Cannot load months. Check deployment.'; });
 }
 function loadMonth(name,silent){
