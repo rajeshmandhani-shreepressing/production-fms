@@ -625,8 +625,8 @@ const REFRESH_SECONDS = 10;                 // <-- change refresh interval here 
      • IDLE_LOGOUT_MIN   — also signs out after this many minutes of NO interaction (mouse/key/touch),
                            so an unattended floor screen doesn't sit logged-in forever.
    Set either to 0 to disable that particular rule. */
-const SESSION_MAX_MIN = 20;                 // absolute session length (minutes) — 1 hour
-const IDLE_LOGOUT_MIN = 10;                 // idle timeout (minutes); 0 to disable
+const SESSION_MAX_MIN = 60;                 // absolute session length (minutes) — 1 hour
+const IDLE_LOGOUT_MIN = 20;                 // idle timeout (minutes); 0 to disable
 
 /* ================== STATE ================== */
 let DATA=null, YEAR_DATA=null, CHARTS={}, sortP={k:'actual',d:-1}, sortO={k:'shifts',d:-1}, sortL={k:'date',d:1};
@@ -754,11 +754,26 @@ function paintMeta(){
 function loadMonths(){
   fetch(API_URL+'?action=months').then(r=>r.json()).then(d=>{
     const sel=document.getElementById('monthSel'); sel.innerHTML='';
-    (d.months||[]).forEach(m=>{
+    const months=d.months||[];
+    months.forEach(m=>{
       const o=document.createElement('option'); o.value=m.name;
       o.textContent=m.name+(m.hidden?' (archived)':''); sel.appendChild(o);
     });
-    if((d.months||[]).length){ loadMonth(sel.value); } else loadMonth('');
+    if(months.length){
+      // Default to the CURRENT live month, not just the first tab in the workbook.
+      // Priority: (1) the tab matching today's real month/year, (2) the first non-archived tab,
+      // (3) as a last resort the newest tab. This stops it landing on "Sep (archived)".
+      const now=new Date();
+      const monNames=['january','february','march','april','may','june','july','august','september','october','november','december'];
+      const thisMon=monNames[now.getMonth()], thisYr=String(now.getFullYear());
+      const matchNow=months.find(m=>{
+        const n=m.name.toLowerCase();
+        return n.indexOf(thisMon.slice(0,3))>=0 && n.indexOf(thisYr)>=0;
+      });
+      const live=matchNow || months.find(m=>!m.hidden) || months[months.length-1];
+      sel.value=live.name;
+      loadMonth(sel.value);
+    } else loadMonth('');
   }).catch(()=>{ document.getElementById('loadingMain').textContent='Cannot load months. Check deployment.'; });
 }
 function loadMonth(name,silent){
