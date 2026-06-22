@@ -625,15 +625,18 @@ const REFRESH_SECONDS = 10;                 // <-- change refresh interval here 
      • IDLE_LOGOUT_MIN   — also signs out after this many minutes of NO interaction (mouse/key/touch),
                            so an unattended floor screen doesn't sit logged-in forever.
    Set either to 0 to disable that particular rule. */
-const SESSION_MAX_MIN = 60;                 // absolute session length (minutes) — 1 hour
-const IDLE_LOGOUT_MIN = 20;                 // idle timeout (minutes); 0 to disable
+const SESSION_MAX_MIN = 20;                 // absolute session length (minutes) — 1 hour
+const IDLE_LOGOUT_MIN = 10;                 // idle timeout (minutes); 0 to disable
 
 /* ================== STATE ================== */
 let DATA=null, YEAR_DATA=null, CHARTS={}, sortP={k:'actual',d:-1}, sortO={k:'shifts',d:-1}, sortL={k:'date',d:1};
 let curReport='monthly', refreshTimer=null, countdownTimer=null, secsLeft=REFRESH_SECONDS;
 let RANGE_DATA=null, PVD_DATA=null;
 
-/* ================== LOGIN (username + password, verified in .gs) ================== */
+/* ================== LOGIN (username + password, verified in .gs) ==================
+   The password is sent in the POST BODY (not in the URL), so it never lands in browser
+   history, the address bar, or Google's URL logs. We use Content-Type text/plain so the
+   request stays a "simple" request and Apps Script accepts it without a CORS preflight. */
 function doLogin(){
   const u=document.getElementById('user').value.trim();
   const p=document.getElementById('pass').value;
@@ -641,7 +644,12 @@ function doLogin(){
   if(!u||!p){err.textContent='Enter username and password.';return;}
   if(API_URL.indexOf('PASTE_')===0){err.textContent='Set API_URL first (see Apps Script setup).';return;}
   err.textContent='Checking…';
-  fetch(API_URL+'?action=login&user='+encodeURIComponent(u)+'&pass='+encodeURIComponent(p))
+  fetch(API_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'login', user:u, pass:p}),
+      redirect:'follow'
+    })
     .then(r=>r.json()).then(d=>{
       if(d.ok){
         sessionStorage.setItem('mc_user',u);
@@ -679,9 +687,6 @@ function enterApp(){
   document.getElementById('app').style.display='block';
   // if there's no login stamp (e.g. restored older session), stamp now so the cap still applies
   if(!sessionStorage.getItem('mc_login_at')) sessionStorage.setItem('mc_login_at', String(Date.now()));
-  // always land on the Overview tab on login, regardless of where a previous session left off
-  const ovBtn=document.querySelector('#nav button[data-tab="overview"]');
-  if(ovBtn) showTab(ovBtn);
   startSessionWatch();
   loadMonths();
 }
@@ -749,18 +754,11 @@ function paintMeta(){
 function loadMonths(){
   fetch(API_URL+'?action=months').then(r=>r.json()).then(d=>{
     const sel=document.getElementById('monthSel'); sel.innerHTML='';
-    const months=d.months||[];
-    months.forEach(m=>{
+    (d.months||[]).forEach(m=>{
       const o=document.createElement('option'); o.value=m.name;
       o.textContent=m.name+(m.hidden?' (archived)':''); sel.appendChild(o);
     });
-    if(months.length){
-      // default to the current (newest) live month: the first non-archived tab,
-      // falling back to the newest tab if every tab happens to be archived
-      const live=months.find(m=>!m.hidden) || months[0];
-      sel.value=live.name;
-      loadMonth(sel.value);
-    } else loadMonth('');
+    if((d.months||[]).length){ loadMonth(sel.value); } else loadMonth('');
   }).catch(()=>{ document.getElementById('loadingMain').textContent='Cannot load months. Check deployment.'; });
 }
 function loadMonth(name,silent){
