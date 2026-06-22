@@ -166,6 +166,8 @@ td.num,th.num{font-family:var(--mono);text-align:right}
 .rep-controls button{background:var(--surface);border:1px solid var(--line2);color:var(--ink);border-radius:9px;padding:11px 16px;font-size:13px;font-weight:600;box-shadow:var(--shadow)}
 .rep-controls button.active{background:var(--steel);color:#fff;border-color:var(--steel)}
 .rep-controls button.print{margin-left:auto;background:var(--green);color:#fff;border-color:var(--green)}
+.fm-preset{background:var(--surface);border:1px solid var(--line2);color:var(--ink);border-radius:8px;padding:7px 13px;font-size:12.5px;font-weight:600;cursor:pointer}
+.fm-preset.active{background:var(--steel);color:#fff;border-color:var(--steel)}
 #reportArea{background:#fff;color:#111;border-radius:13px;padding:36px 40px;font-size:13px;box-shadow:var(--shadow);border:1px solid var(--line)}
 .qrange{background:var(--surface);border:1px solid var(--line2);border-radius:7px;padding:6px 11px;font-size:11.5px;font-weight:600;color:var(--muted)}
 .qrange:hover{border-color:var(--steel);color:var(--steel)}
@@ -458,6 +460,35 @@ td.num,th.num{font-family:var(--mono);text-align:right}
           <div class="panel"><h4>Downtime by Day (min)</h4><div class="hint">Click any day to see who produced what and the 4M reasons logged.</div><div class="chartbox"><canvas id="chDtDay"></canvas></div></div>
         </div>
         <div class="panel" id="dtDayPanel" style="margin-top:16px;display:none"></div>
+
+        <!-- 4M PER-LINE ANALYSIS -->
+        <h3 class="sect" style="margin-top:26px">4M Breakdown by Line</h3>
+        <div class="hint" style="color:var(--dim);margin-bottom:12px">
+          Every stoppage split by line and by cause. Use this to find which line breaks down most and WHY.
+          Causes are grouped into 4M families — Machine (Die Issue), Method (Die Change, Trial),
+          Power/Utility (No Power), Other (free-text 4M note). Default shows this month; pick a custom range below.
+        </div>
+        <div id="fmRangeBar" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px;padding:13px 15px;background:var(--surface2);border:1px solid var(--line);border-radius:11px">
+          <span style="font-size:12.5px;color:var(--dim);font-weight:600">Range:</span>
+          <button class="fm-preset active" onclick="fmSetRange('month',this)">This month</button>
+          <button class="fm-preset" onclick="fmSetRange('7',this)">Last 7 days</button>
+          <button class="fm-preset" onclick="fmSetRange('30',this)">Last 30 days</button>
+          <span style="font-size:12.5px;color:var(--dim)">or</span>
+          <input type="date" id="fmFrom" style="padding:6px 9px;border:1px solid var(--line);border-radius:7px">
+          <span style="color:var(--dim)">→</span>
+          <input type="date" id="fmTo" style="padding:6px 9px;border:1px solid var(--line);border-radius:7px">
+          <button class="fm-preset" onclick="fmSetRange('custom',this)">Apply</button>
+          <span id="fmRangeStatus" style="font-size:12px;color:var(--dim)"></span>
+        </div>
+        <div id="fm4mKpis" class="kpis" style="margin-bottom:16px"></div>
+        <div class="grid2" style="margin-bottom:16px">
+          <div class="panel"><h4>Downtime by Line (min)</h4><div class="chartbox"><canvas id="chFmLine"></canvas></div></div>
+          <div class="panel"><h4>4M Family Split (whole period)</h4><div class="chartbox"><canvas id="chFmFamily"></canvas></div></div>
+        </div>
+        <div class="tbl-wrap">
+          <table id="fm4mTbl"><thead></thead><tbody></tbody></table>
+        </div>
+        <div class="panel" id="fmLinePanel" style="margin-top:16px;display:none"></div>
       </section>
 
       <!-- PRODUCTION vs DISPATCH -->
@@ -617,7 +648,7 @@ td.num,th.num{font-family:var(--mono);text-align:right}
    Logins are now checked securely in the Apps Script (.gs) — passwords are
    never stored in this file. Manage users in the USERS map inside the .gs.
    ============================================================================ */
-const API_URL = "https://script.google.com/macros/s/AKfycbyX-cDH4cHQqGYAespGigczFKcxCqConhbwbAkPrJE_lrCPzwV4F3ej2WBFyY7JrQUR/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbys0Ud9ppqMS9S5mw6ndDYtFoHohnkaTQ192OJdk4nPobjj3TjBmexiMpDb4whpv2fJ/exec";
 const REFRESH_SECONDS = 10;                 // <-- change refresh interval here (seconds)
 
 /* ---- SESSION / AUTO-LOGOUT ----
@@ -828,7 +859,7 @@ const LEG={labels:{color:'#1a2533',font:{size:12,weight:'600'},usePointStyle:tru
 function renderAll(){
   // each widget is isolated: one failing render never blanks the rest of the dashboard
   const steps=[renderKpis,renderLiveToday,renderDaily,renderAchieve,renderSlots,
-    renderToday,renderLines,renderPartsChart,renderParts,renderOps,renderDowntime,
+    renderToday,renderLines,renderPartsChart,renderParts,renderOps,renderDowntime,renderDowntime4M,
     fillLogFilters,renderLog,renderDispatch,buildReport];
   steps.forEach(fn=>{ try{ fn(); }catch(e){ console.error('render step failed:',fn.name,e); } });
 }
@@ -1163,6 +1194,126 @@ function showDtDay(dateKey, label){
     </div>`;
   panel.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
+
+/* ===================== 4M BREAKDOWN BY LINE =====================
+   FM_DATA holds the downtime4M object currently shown. By default it's this month's
+   (DATA.downtime4M); a custom range fetches ?action=range and uses that payload's downtime4M. */
+let FM_DATA=null, FM_LABEL='this month', FM_MONTH_MODE=true;
+const FM_FAMILY_COLORS={'Machine':'#d4392f','Method':'#2f6fb0','Power/Utility':'#d98a00','Other (4M note)':'#6b4fb0','Other':'#8a93a3'};
+function fmColor(f){ return FM_FAMILY_COLORS[f]||'#8a93a3'; }
+
+function renderDowntime4M(){
+  // In month mode (default), always reflect the freshly-loaded month so auto-refresh stays live.
+  // In custom-range mode, keep the user's fetched range untouched across silent refreshes.
+  if(FM_MONTH_MODE) FM_DATA = DATA.downtime4M || null;
+  const F=FM_DATA;
+  const kp=document.getElementById('fm4mKpis');
+  if(!F || !F.lines || !F.lines.length){
+    kp.innerHTML=`<div class="kpi"><div class="val v-green">0</div><div class="sub">No downtime logged for ${FM_LABEL}.</div></div>`;
+    killChart('chFmLine'); killChart('chFmFamily');
+    document.querySelector('#fm4mTbl thead').innerHTML='';
+    document.querySelector('#fm4mTbl tbody').innerHTML='';
+    document.getElementById('fmLinePanel').style.display='none';
+    return;
+  }
+  const worst=F.lines[0];   // already sorted worst-first
+  const topFam=Object.keys(F.familyTotal||{}).sort((a,b)=>F.familyTotal[b]-F.familyTotal[a])[0]||'—';
+  // KPI cards
+  kp.innerHTML=`
+    <div class="kpi"><div class="top"><div class="lbl">Total Downtime (${FM_LABEL})</div><div class="ico ic-red">⚠</div></div><div class="val v-red">${fmt(F.grandTotal)}<span style="font-size:14px"> min</span></div><div class="sub">${Math.round(F.grandTotal/6)/10} h across all lines</div></div>
+    <div class="kpi"><div class="top"><div class="lbl">Worst Line</div><div class="ico ic-amber">▲</div></div><div class="val v-amber" style="font-size:24px">${worst.line}</div><div class="sub">${fmt(worst.total)} min · ${worst.sharePct}% of all downtime</div></div>
+    <div class="kpi"><div class="top"><div class="lbl">Worst Line — main cause</div><div class="ico ic-steel">◷</div></div><div class="val v-steel" style="font-size:18px">${worst.domCause||'—'}</div><div class="sub">${worst.domFamily||''} · ${fmt(worst.domCauseMins)} min</div></div>
+    <div class="kpi"><div class="top"><div class="lbl">Biggest 4M family</div><div class="ico ic-violet">⬡</div></div><div class="val v-violet" style="font-size:18px">${topFam}</div><div class="sub">${fmt(F.familyTotal[topFam]||0)} min total</div></div>`;
+
+  // chart: downtime by line, stacked by 4M family
+  const lines=F.lines, fams=F.families;
+  killChart('chFmLine');
+  CHARTS.chFmLine=new Chart(document.getElementById('chFmLine'),{
+    type:'bar',
+    data:{labels:lines.map(l=>l.line),
+      datasets:fams.map(f=>({label:f,data:lines.map(l=>l.byFamily[f]||0),backgroundColor:fmColor(f),borderRadius:3,stack:'d'}))},
+    options:{maintainAspectRatio:false,plugins:{legend:LEG},
+      onClick:(e,el)=>{ if(el.length){ fmShowLine(lines[el[0].index].line); } },
+      scales:{x:{stacked:true,grid:{display:false},ticks:TICK},y:{stacked:true,grid:GRID,ticks:TICK,beginAtZero:true}}}
+  });
+  // chart: overall 4M family split (doughnut)
+  const famKeys=Object.keys(F.familyTotal||{});
+  killChart('chFmFamily');
+  CHARTS.chFmFamily=new Chart(document.getElementById('chFmFamily'),{
+    type:'doughnut',
+    data:{labels:famKeys,datasets:[{data:famKeys.map(f=>F.familyTotal[f]),backgroundColor:famKeys.map(fmColor),borderWidth:2,borderColor:'#fff'}]},
+    options:{maintainAspectRatio:false,plugins:{legend:LEG}}
+  });
+
+  // table: line × cause type, with totals, dominant cause, worst day, share %
+  const causes=F.causeTypes;
+  document.querySelector('#fm4mTbl thead').innerHTML=`<tr>
+    <th>Line</th>
+    ${causes.map(c=>`<th class="num">${c}</th>`).join('')}
+    <th class="num">Total</th><th class="num">Share</th>
+    <th>Main cause</th><th>Worst day</th></tr>`;
+  document.querySelector('#fm4mTbl tbody').innerHTML=lines.map(l=>`<tr style="cursor:pointer" onclick="fmShowLine('${l.line.replace(/'/g,"\\'")}')">
+    <td><b>${l.line}</b></td>
+    ${causes.map(c=>{const v=l.byCause[c]||0;return `<td class="num" style="color:${v?'#c0392b':'var(--dim)'}">${v?fmt(v):'·'}</td>`;}).join('')}
+    <td class="num"><b>${fmt(l.total)}</b></td>
+    <td class="num">${l.sharePct}%</td>
+    <td>${l.domCause?`<span class="pill p-bad">${l.domCause}</span>`:'—'}</td>
+    <td>${l.worstDay?l.worstDay.date+' ('+l.worstDay.mins+'m)':'—'}</td></tr>`).join('');
+
+  document.getElementById('fmLinePanel').style.display='none';
+}
+
+// per-line drilldown: every dated stoppage with cause, family, minutes and the exact sheet note
+function fmShowLine(lineName){
+  const F=FM_DATA; if(!F) return;
+  const L=F.lines.find(x=>x.line===lineName); if(!L) return;
+  const panel=document.getElementById('fmLinePanel');
+  const causeRows=Object.keys(L.byCause).sort((a,b)=>L.byCause[b]-L.byCause[a]).map(c=>
+    `<tr><td>${c}</td><td>${ ({'Die Issue':'Machine','Die Change':'Method','Trial':'Method','No Power':'Power/Utility','4M':'Other (4M note)'})[c]||'Other' }</td><td class="num">${fmt(L.byCause[c])}</td><td class="num">${L.total?Math.round(L.byCause[c]/L.total*100):0}%</td></tr>`).join('');
+  const noteRows=L.notes.map(n=>`<tr><td>${n.date}</td><td><span class="pill ${n.family==='Machine'?'p-bad':n.family==='Method'?'p-mid':'p-good'}">${n.cause}</span></td><td class="num">${n.mins} min</td><td>${n.note||'—'}</td></tr>`).join('');
+  panel.style.display='block';
+  panel.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <h4 style="margin:0">Line ${L.line} — downtime detail (${FM_LABEL})</h4>
+      <div class="hint" style="margin:0">${fmt(L.total)} min total · ${L.sharePct}% of all downtime · main: <b>${L.domCause||'—'}</b></div>
+    </div>
+    <h4 style="margin:16px 0 8px">Cause summary</h4>
+    <div class="tbl-wrap"><table><thead><tr><th>Cause</th><th>4M family</th><th class="num">Minutes</th><th class="num">% of line</th></tr></thead><tbody>${causeRows}</tbody></table></div>
+    <h4 style="margin:16px 0 8px">Every stoppage logged (biggest first — read these notes to find the root cause)</h4>
+    <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Cause</th><th class="num">Minutes</th><th>Reason / note from sheet</th></tr></thead><tbody>${noteRows||'<tr><td colspan="4" class="empty">No notes.</td></tr>'}</tbody></table></div>`;
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+// range switcher for the 4M section
+function fmSetRange(kind, btn){
+  document.querySelectorAll('.fm-preset').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const st=document.getElementById('fmRangeStatus');
+  if(kind==='month'){
+    FM_MONTH_MODE=true; FM_DATA=DATA.downtime4M||null; FM_LABEL='this month'; st.textContent='';
+    renderDowntime4M(); return;
+  }
+  FM_MONTH_MODE=false;
+  let from,to;
+  to = DATA&&DATA.lastDate? new Date(DATA.lastDate) : new Date();
+  if(kind==='7'||kind==='30'){
+    from=new Date(to.getTime()-(parseInt(kind,10))*86400000);
+  } else { // custom
+    const f=document.getElementById('fmFrom').value, t=document.getElementById('fmTo').value;
+    if(!f||!t){ st.textContent='Pick both dates.'; st.style.color='var(--amber)'; return; }
+    from=new Date(f); to=new Date(t);
+  }
+  const fs=ymdLocal(from), ts=ymdLocal(to);
+  st.textContent='Loading '+fs+' → '+ts+'…'; st.style.color='var(--dim)';
+  fetch(API_URL+'?action=range&from='+encodeURIComponent(fs)+'&to='+encodeURIComponent(ts))
+    .then(r=>r.json()).then(d=>{
+      if(!d || !d.downtime4M){ st.textContent='No data for that range.'; st.style.color='var(--amber)'; return; }
+      FM_DATA=d.downtime4M; FM_LABEL=fs+' → '+ts;
+      st.textContent='✓ '+fs+' → '+ts; st.style.color='var(--green)';
+      renderDowntime4M();
+    }).catch(()=>{ st.textContent='Could not load range.'; st.style.color='var(--red)'; });
+}
+function ymdLocal(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
 
 /* ----- DAY LOG ----- */
 function fillLogFilters(){
