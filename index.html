@@ -141,6 +141,17 @@ button{font-family:inherit;cursor:pointer}
 #lucyApp .loading{padding:40px;text-align:center;color:var(--muted)}
 #lucyApp .l-page{display:none}
 #lucyApp .l-page.active{display:block}
+#lucyApp td.dim{color:var(--dim)}
+#lucyApp .lviewbtn{background:var(--surface);border:1px solid var(--line2);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--muted)}
+#lucyApp .lviewbtn.on{background:var(--steel);color:#fff;border-color:var(--steel)}
+#lucyApp .pcards{display:grid;grid-template-columns:1fr;gap:14px;margin-top:12px}
+#lucyApp .pcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+#lucyApp .pcard-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;gap:12px;flex-wrap:wrap}
+#lucyApp .pcard-head b{font-size:15px}
+#lucyApp .pcard-name{color:var(--muted);font-size:13px;margin-left:6px}
+#lucyApp .pcard-now{font-size:12px;color:var(--muted)}
+#lucyApp .pcard .journey{margin-top:10px}
+#lucyApp .pill.over{display:inline-block;margin-bottom:6px}
 
 /* ---------- SHELL: sidebar + main ---------- */
 #app{display:none;min-height:100vh}
@@ -410,11 +421,10 @@ td.num,th.num{font-family:var(--mono);text-align:right}
     </div>
     <nav>
       <div class="grp">Monitor</div>
-      <button class="active" data-ltab="open" onclick="lucyTab(this)"><span class="ic">▦</span>All Open Batches</button>
-      <button data-ltab="journey" onclick="lucyTab(this)"><span class="ic">⇄</span>Batch Journey</button>
-      <button data-ltab="part" onclick="lucyTab(this)"><span class="ic">◧</span>By Part Type</button>
+      <button class="active" data-ltab="pipeline" onclick="lucyTab(this)"><span class="ic">▦</span>Pipeline (live)</button>
+      <button data-ltab="jobcard" onclick="lucyTab(this)"><span class="ic">▤</span>Job Card / Routes</button>
       <div class="grp">Plan</div>
-      <button data-ltab="schedule" onclick="lucyTab(this)"><span class="ic">▤</span>Schedule &amp; Dispatch</button>
+      <button data-ltab="dispatch" onclick="lucyTab(this)"><span class="ic">⇄</span>Schedule &amp; Dispatch</button>
     </nav>
     <div class="foot">
       <div id="lucyMeta">—</div>
@@ -430,10 +440,9 @@ td.num,th.num{font-family:var(--mono);text-align:right}
     </header>
     <main class="l-main">
       <div id="lucyLoading" class="loading">Loading LUCY production data…</div>
-      <section class="l-page active" id="lpage-open"></section>
-      <section class="l-page" id="lpage-journey"></section>
-      <section class="l-page" id="lpage-part"></section>
-      <section class="l-page" id="lpage-schedule"></section>
+      <section class="l-page active" id="lpage-pipeline"></section>
+      <section class="l-page" id="lpage-jobcard"></section>
+      <section class="l-page" id="lpage-dispatch"></section>
     </main>
   </div>
  </div>
@@ -2031,21 +2040,22 @@ function repPVD(){
     <h2>Month-by-month (year)</h2>
     <table><thead><tr><th>Month</th><th style="text-align:right">Produced</th><th style="text-align:right">Dispatched</th><th style="text-align:right">Net</th><th style="text-align:right">Disp/Prod</th></tr></thead><tbody>${monRows||'<tr><td colspan=5>No data</td></tr>'}</tbody></table>
     `+repSign();
-}/* ====================================================================
+}
+/* ====================================================================
    LUCY CELL DASHBOARD MODULE  (fully isolated from Magnet Case above)
    --------------------------------------------------------------------
-   Paste your deployed LUCY Apps Script /exec URL below. It must serve
-   the Single-Ledger Google Sheet as JSON (see Lucy_Backend.gs).
+   Model: PART + OPERATION STAGE (no batch IDs).
+   Paste your deployed LUCY Apps Script /exec URL below (Lucy_Backend.gs).
    ==================================================================== */
-const LUCY_API_URL = "https://script.google.com/macros/s/AKfycbw2O6tBvmRsN9TgnDTJav031onCp84C7rDH8aud8-rFLQLJy0--4WOdxK9fKuZ7QVAG9A/exec";
+const LUCY_API_URL = "https://script.google.com/macros/s/AKfycbxwrTG_YSntR05hbdT1qe9CxSI6A60ERv0XKv8-HOStNdgTFjO5F2dILrNKnxs8QNZ3Wg/exec";
 
-let LUCY_DATA=null, lucyTimer=null, lucyActiveTab='open';
+let LUCY_DATA=null, lucyTimer=null, lucyActiveTab='pipeline', lucyView='cards', lucyJobPart='';
 function lucyTeardown(){ if(lucyTimer){clearInterval(lucyTimer);lucyTimer=null;} document.getElementById('lucyApp').style.display='none'; }
 function bootLucy(){
   document.getElementById('portal').style.display='none';
   document.getElementById('lucyApp').style.display='block';
-  lucyActiveTab='open';
-  document.querySelectorAll('#lucyApp .l-side nav button').forEach(b=>b.classList.toggle('active',b.dataset.ltab==='open'));
+  lucyActiveTab='pipeline';
+  document.querySelectorAll('#lucyApp .l-side nav button').forEach(b=>b.classList.toggle('active',b.dataset.ltab==='pipeline'));
   lucyLoad();
   if(lucyTimer)clearInterval(lucyTimer);
   lucyTimer=setInterval(()=>lucyLoad(true),30000);
@@ -2054,15 +2064,17 @@ function lucyTab(btn){
   document.querySelectorAll('#lucyApp .l-side nav button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   lucyActiveTab=btn.dataset.ltab;
-  const titles={open:['All Open Batches','Live WIP monitor'],journey:['Batch Journey','RM → dispatch traveller view'],part:['By Part Type','All batches for one part'],schedule:['Schedule & Dispatch','Customer schedule vs shipped']};
-  document.getElementById('lucyTitle').textContent=titles[lucyActiveTab][0];
-  document.getElementById('lucyCrumb').textContent=titles[lucyActiveTab][1];
+  const t={pipeline:['Pipeline','Live pieces at each stage — red = unaccounted'],
+           jobcard:['Job Card / Routes','Process route per part — show this to a customer'],
+           dispatch:['Schedule & Dispatch','Customer schedule vs shipped (you fill daily)']};
+  document.getElementById('lucyTitle').textContent=t[lucyActiveTab][0];
+  document.getElementById('lucyCrumb').textContent=t[lucyActiveTab][1];
   lucyRender();
 }
 function lucyLoad(silent){
   if(!silent) document.getElementById('lucyLoading').style.display='block';
   if(LUCY_API_URL.indexOf('PASTE_')===0){
-    document.getElementById('lucyLoading').innerHTML='⚠ LUCY_API_URL not set yet. Deploy Lucy_Backend.gs and paste its /exec URL into index.html (LUCY_API_URL).';
+    document.getElementById('lucyLoading').innerHTML='⚠ LUCY_API_URL not set. Deploy Lucy_Backend.gs and paste its /exec URL into index.html (LUCY_API_URL).';
     return;
   }
   fetch(LUCY_API_URL+'?action=data').then(r=>r.json()).then(d=>{
@@ -2073,129 +2085,145 @@ function lucyLoad(silent){
 }
 function lucyEsc(s){return (s==null?'':String(s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 function lucyFmt(n){n=Number(n||0);return n.toLocaleString('en-IN');}
+function lucyPct(p){return p==null?'—':Math.round(p*100)+'%';}
 
 function lucyRender(){
   if(!LUCY_DATA)return;
   document.querySelectorAll('#lucyApp .l-page').forEach(p=>p.classList.remove('active'));
-  const pg=document.getElementById('lpage-'+lucyActiveTab); pg.classList.add('active');
-  if(lucyActiveTab==='open') pg.innerHTML=lucyRenderOpen();
-  else if(lucyActiveTab==='journey') pg.innerHTML=lucyRenderJourney();
-  else if(lucyActiveTab==='part') pg.innerHTML=lucyRenderPart();
-  else if(lucyActiveTab==='schedule') pg.innerHTML=lucyRenderSchedule();
+  const pg=document.getElementById('lpage-'+lucyActiveTab); if(!pg)return; pg.classList.add('active');
+  if(lucyActiveTab==='pipeline') pg.innerHTML=lucyRenderPipeline();
+  else if(lucyActiveTab==='jobcard') pg.innerHTML=lucyRenderJobcard();
+  else if(lucyActiveTab==='dispatch') pg.innerHTML=lucyRenderDispatch();
 }
 
-/* ---- View 1: all open batches (where is everything now) ---- */
-function lucyRenderOpen(){
-  const b=LUCY_DATA.batches||[];
-  const open=b.filter(x=>x.nextOp && x.nextOp!=='FG / DISPATCH');
-  const totLeak=b.reduce((s,x)=>s+(+x.leak||0),0);
-  const totRej=b.reduce((s,x)=>s+(+x.rejected||0),0);
-  const totRew=b.reduce((s,x)=>s+(+x.rework||0),0);
+/* ---------- PIPELINE (cards <-> table toggle) ---------- */
+function lucySetView(v){ lucyView=v; document.getElementById('lpage-pipeline').innerHTML=lucyRenderPipeline(); }
+function lucyRenderPipeline(){
+  const P=LUCY_DATA.pipeline||[];
+  const active=P.filter(x=>x.furthestOp!=='Not started');
+  const leaks=P.filter(x=>x.worstLeak>0);
+  const totLeak=P.reduce((s,x)=>s+(+x.worstLeak||0),0);
+  const totRej=P.reduce((s,x)=>s+(+x.totalRejected||0),0);
   const kpis=`<div class="kpis">
-    <div class="kpi"><div class="l">Open Batches</div><div class="v">${open.length}</div></div>
-    <div class="kpi ${totLeak>0?'bad':''}"><div class="l">Total WIP Leak (pcs)</div><div class="v">${lucyFmt(totLeak)}</div></div>
-    <div class="kpi ${totRej>0?'bad':''}"><div class="l">Total Rejected (pcs)</div><div class="v">${lucyFmt(totRej)}</div></div>
-    <div class="kpi"><div class="l">Open Rework (pcs)</div><div class="v">${lucyFmt(totRew)}</div></div>
+    <div class="kpi"><div class="l">Parts in progress</div><div class="v">${active.length}</div></div>
+    <div class="kpi ${leaks.length?'bad':'good'}"><div class="l">Parts with leak</div><div class="v">${leaks.length}</div></div>
+    <div class="kpi ${totLeak>0?'bad':''}"><div class="l">Total unaccounted (pcs)</div><div class="v">${lucyFmt(totLeak)}</div></div>
+    <div class="kpi ${totRej>0?'bad':''}"><div class="l">Total rejected (pcs)</div><div class="v">${lucyFmt(totRej)}</div></div>
   </div>`;
-  const rows=b.map(x=>`<tr>
-    <td><b>${lucyEsc(x.batchId)}</b></td>
-    <td>${lucyEsc(x.part)}</td>
-    <td>${lucyEsc(x.lastOp)}</td>
-    <td class="num">${lucyFmt(x.goodAtLast)}</td>
-    <td class="num ${(+x.rejected)>0?'leak':''}">${lucyFmt(x.rejected)}</td>
-    <td class="num">${lucyFmt(x.rework)}</td>
-    <td class="num ${(+x.leak)>0?'leak':''}">${lucyFmt(x.leak)}</td>
-    <td>${x.nextOp==='FG / DISPATCH'?'<span class="pill done">FG / DISPATCH</span>':lucyEsc(x.nextOp)}</td>
-  </tr>`).join('');
-  return kpis+`<h3 class="sect">Live batch status</h3>
-   <div class="tbl-wrap"><table><thead><tr>
-     <th>Batch</th><th>Part</th><th>Last Op Done</th><th class="num">Good Qty</th>
-     <th class="num">Rejected</th><th class="num">Rework</th><th class="num">WIP Leak</th><th>Next Op Due</th>
-   </tr></thead><tbody>${rows||'<tr><td colspan=8>No batches logged yet.</td></tr>'}</tbody></table></div>
-   <p style="color:var(--muted);font-size:12px;margin-top:10px">Red WIP Leak = pieces left a station unaccounted. Resolve before the batch moves on.</p>`;
+  const toggle=`<div style="display:flex;gap:8px;margin:18px 0 4px">
+     <button class="lviewbtn ${lucyView==='cards'?'on':''}" onclick="lucySetView('cards')">▦ Cards</button>
+     <button class="lviewbtn ${lucyView==='table'?'on':''}" onclick="lucySetView('table')">▤ Table</button></div>`;
+  return kpis+toggle+(lucyView==='cards'?lucyPipeCards(P):lucyPipeTable(P));
+}
+function lucyPipeCards(P){
+  // show parts in progress first, leaks at very top
+  const order=[...P].sort((a,b)=>(b.worstLeak>0)-(a.worstLeak>0) || (b.furthestOp!=='Not started')-(a.furthestOp!=='Not started'));
+  const cards=order.map(x=>{
+    const strip=x.stages.map((s,i)=>{
+      const next=x.stages[i+1];
+      let cls='pend';
+      if(s.good>0){ cls='done'; }
+      // mark current = last with good>0
+      const isLast = s.good>0 && (!next || next.good===0);
+      if(isLast) cls='cur';
+      // leak marker: this stage feeds a downstream drop
+      let leakHere=false;
+      if(next && s.good>0 && next.good>0 && (s.good-next.good-next.rejected)>0) leakHere=true;
+      if(leakHere) cls='leakstep';
+      const meta = s.good>0 ? lucyFmt(s.good)+(s.rejected?(' · rej '+lucyFmt(s.rejected)):'') : '·';
+      return `<div class="jstep ${cls}"><span class="op">${lucyEsc(s.op)}</span><span class="meta">${lucyEsc(s.cell.replace(' Cell','').replace(' Shop',''))}</span><span class="meta">${meta}</span></div>`;
+    }).join('<span class="jarrow">→</span>');
+    const leakBadge = x.worstLeak>0 ? `<span class="pill over">⚠ ${lucyFmt(x.worstLeak)} unaccounted (${lucyEsc(x.leakAt)})</span>` : '';
+    return `<div class="pcard">
+       <div class="pcard-head">
+         <div><b>${lucyEsc(x.code)}</b> <span class="pcard-name">${lucyEsc(x.name)}</span></div>
+         <div class="pcard-now">Furthest: <b>${lucyEsc(x.furthestOp)}</b></div>
+       </div>
+       ${leakBadge}
+       <div class="journey">${strip}</div>
+     </div>`;
+  }).join('');
+  return `<div class="pcards">${cards}</div>`;
+}
+function lucyPipeTable(P){
+  const rows=P.map(x=>{
+    const cells=x.stages.map(s=>`<td class="num ${s.good>0?'':'dim'}">${s.good>0?lucyFmt(s.good):'·'}</td>`).join('');
+    return `<tr>
+      <td><b>${lucyEsc(x.code)}</b></td><td>${lucyEsc(x.name)}</td>
+      <td>${lucyEsc(x.furthestOp)}</td>
+      <td class="num ${x.totalRejected>0?'leak':''}">${lucyFmt(x.totalRejected)}</td>
+      <td class="num ${x.worstLeak>0?'leak':''}">${x.worstLeak>0?lucyFmt(x.worstLeak):'—'}</td>
+      <td>${x.leakAt?lucyEsc(x.leakAt):'—'}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="tbl-wrap" style="margin-top:8px"><table><thead><tr>
+     <th>Code</th><th>Part</th><th>Furthest Op</th><th class="num">Rejected</th><th class="num">Unaccounted</th><th>Leak between</th>
+   </tr></thead><tbody>${rows||'<tr><td colspan=6>No data yet.</td></tr>'}</tbody></table></div>
+   <p style="color:var(--muted);font-size:12px;margin-top:10px">"Unaccounted" = pieces that left one station but didn't arrive at the next, after subtracting logged rejections. Chase these before dispatch.</p>`;
 }
 
-/* ---- View 2: one batch full journey (RM -> dispatch strip) ---- */
-function lucyRenderJourney(){
-  const b=LUCY_DATA.batches||[];
-  const sel=`<div style="margin-bottom:16px"><label style="font-size:12px;font-weight:600;color:var(--muted);margin-right:8px">Batch</label>
-    <select id="lucyBatchSel" onchange="lucyDrawJourney(this.value)">
-    <option value="">— choose a batch —</option>
-    ${b.map(x=>`<option value="${lucyEsc(x.batchId)}">${lucyEsc(x.batchId)} · ${lucyEsc(x.part)}</option>`).join('')}
-    </select></div><div id="lucyJourneyBox"></div>`;
-  setTimeout(()=>{ const f=b[0]; if(f){const s=document.getElementById('lucyBatchSel'); if(s){s.value=f.batchId; lucyDrawJourney(f.batchId);}} },0);
-  return `<h3 class="sect">Batch journey</h3>`+sel;
-}
-function lucyDrawJourney(batchId){
-  const box=document.getElementById('lucyJourneyBox'); if(!box)return;
-  if(!batchId){box.innerHTML='';return;}
-  const route=(LUCY_DATA.routes||[])[ (LUCY_DATA.batchPart||{})[batchId] ]||[];
-  const events=(LUCY_DATA.events||[]).filter(e=>e.batchId===batchId);
-  const bMeta=(LUCY_DATA.batches||[]).find(x=>x.batchId===batchId)||{};
-  const evBySeq={}; events.forEach(e=>{evBySeq[+e.seq]=e;});
-  const maxDone=events.reduce((m,e)=>Math.max(m,+e.seq||0),0);
-  const steps=route.map(r=>{
-    const ev=evBySeq[+r.seq];
-    let cls='pend',meta='pending';
-    if(ev){ const leak=(+ev.qtyIn||0)-(+ev.good||0)-(+ev.rejected||0)-(+ev.rework||0);
-      cls = leak>0?'leakstep':(+r.seq===maxDone?'cur':'done');
-      meta = `out ${lucyFmt(ev.good)}${(+ev.rejected)?' · rej '+lucyFmt(ev.rejected):''}${leak>0?' · LEAK '+lucyFmt(leak):''}`;
-    }
-    return `<div class="jstep ${cls}"><span class="op">${r.seq}. ${lucyEsc(r.op)}</span><span class="meta">${lucyEsc(r.cell)}</span><span class="meta">${meta}</span></div>`;
-  }).join('<span class="jarrow">→</span>');
-  box.innerHTML=`<div class="panel"><div style="margin-bottom:12px;font-size:13px;color:var(--muted)">
-      <b style="color:var(--ink);font-size:15px">${lucyEsc(batchId)}</b> · ${lucyEsc(bMeta.part||'')} ·
-      next: ${bMeta.nextOp==='FG / DISPATCH'?'<span class="pill done">FG / DISPATCH</span>':lucyEsc(bMeta.nextOp||'—')}</div>
-      <div class="journey">${steps||'No route defined for this part.'}</div></div>`;
-}
-
-/* ---- View 3: one part across all its batches ---- */
-function lucyRenderPart(){
-  const parts=[...new Set((LUCY_DATA.batches||[]).map(x=>x.part))];
+/* ---------- JOB CARD / ROUTES (customer-presentable) ---------- */
+function lucyRenderJobcard(){
+  const routes=LUCY_DATA.routes||{};
+  const codes=Object.keys(routes);
+  if(!lucyJobPart || !routes[lucyJobPart]) lucyJobPart=codes[0]||'';
   const sel=`<div style="margin-bottom:16px"><label style="font-size:12px;font-weight:600;color:var(--muted);margin-right:8px">Part</label>
-    <select id="lucyPartSel" onchange="lucyDrawPart(this.value)">
-    <option value="">— choose a part —</option>
-    ${parts.map(p=>`<option value="${lucyEsc(p)}">${lucyEsc(p)}</option>`).join('')}
-    </select></div><div id="lucyPartBox"></div>`;
-  setTimeout(()=>{ if(parts[0]){const s=document.getElementById('lucyPartSel'); if(s){s.value=parts[0];lucyDrawPart(parts[0]);}} },0);
-  return `<h3 class="sect">By part type</h3>`+sel;
-}
-function lucyDrawPart(part){
-  const box=document.getElementById('lucyPartBox'); if(!box)return; if(!part){box.innerHTML='';return;}
-  const rows=(LUCY_DATA.batches||[]).filter(x=>x.part===part);
-  const tot=rows.reduce((a,x)=>({g:a.g+(+x.goodAtLast||0),r:a.r+(+x.rejected||0),l:a.l+(+x.leak||0)}),{g:0,r:0,l:0});
-  box.innerHTML=`<div class="kpis">
-      <div class="kpi"><div class="l">Batches</div><div class="v">${rows.length}</div></div>
-      <div class="kpi"><div class="l">Good (latest op)</div><div class="v">${lucyFmt(tot.g)}</div></div>
-      <div class="kpi ${tot.r>0?'bad':''}"><div class="l">Rejected</div><div class="v">${lucyFmt(tot.r)}</div></div>
-      <div class="kpi ${tot.l>0?'bad':''}"><div class="l">WIP Leak</div><div class="v">${lucyFmt(tot.l)}</div></div>
+    <select onchange="lucyJobPart=this.value;document.getElementById('lpage-jobcard').innerHTML=lucyRenderJobcard()">
+    ${codes.map(c=>`<option value="${lucyEsc(c)}" ${c===lucyJobPart?'selected':''}>${lucyEsc(c)} · ${lucyEsc(routes[c].name)}</option>`).join('')}
+    </select></div>`;
+  const R=routes[lucyJobPart];
+  if(!R) return `<h3 class="sect">Job card</h3>${sel}<p style="color:var(--muted)">No route.</p>`;
+  // group consecutive steps by cell for a clean router look
+  const strip=R.steps.map((s,i)=>{
+    return `<div class="jstep done" style="min-width:130px">
+       <span class="op">${s.seq}. ${lucyEsc(s.op)}</span>
+       <span class="meta">${lucyEsc(s.cell)}</span>
+       <span class="meta">${lucyEsc(s.owner)}${s.machine?(' · '+lucyEsc(s.machine)):''}</span></div>`;
+  }).join('<span class="jarrow">→</span>');
+  const tbl=R.steps.map(s=>`<tr><td class="num">${s.seq}</td><td><b>${lucyEsc(s.op)}</b></td>
+     <td>${lucyEsc(s.cell)}</td><td>${lucyEsc(s.owner)}</td><td>${lucyEsc(s.machine||'—')}</td></tr>`).join('');
+  return `<h3 class="sect">Job card — process route</h3>${sel}
+    <div class="panel">
+      <div style="font-size:15px;font-weight:800;margin-bottom:2px">${lucyEsc(R.code)} · ${lucyEsc(R.name)}</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Raw material: ${lucyEsc(R.rm)} · ${R.steps.length} operations</div>
+      <div class="journey">RM <span class="jarrow">→</span>${strip}<span class="jarrow">→</span><div class="jstep cur" style="min-width:90px"><span class="op">FG</span><span class="meta">Dispatch</span></div></div>
     </div>
     <div class="tbl-wrap" style="margin-top:14px"><table><thead><tr>
-      <th>Batch</th><th>Last Op</th><th class="num">Good</th><th class="num">Rejected</th><th class="num">Leak</th><th>Next Op</th>
-    </tr></thead><tbody>${rows.map(x=>`<tr><td><b>${lucyEsc(x.batchId)}</b></td><td>${lucyEsc(x.lastOp)}</td>
-      <td class="num">${lucyFmt(x.goodAtLast)}</td><td class="num ${(+x.rejected)>0?'leak':''}">${lucyFmt(x.rejected)}</td>
-      <td class="num ${(+x.leak)>0?'leak':''}">${lucyFmt(x.leak)}</td>
-      <td>${x.nextOp==='FG / DISPATCH'?'<span class="pill done">FG</span>':lucyEsc(x.nextOp)}</td></tr>`).join('')||'<tr><td colspan=6>No batches.</td></tr>'}</tbody></table></div>`;
+      <th class="num">Step</th><th>Operation</th><th>Cell / Location</th><th>Owner</th><th>Machine</th>
+    </tr></thead><tbody>${tbl}</tbody></table></div>
+    <p style="color:var(--muted);font-size:12px;margin-top:10px">This is the controlled routing for this part — the sequence, the responsible cell, and the machine at each step.</p>`;
 }
 
-/* ---- View 4: schedule vs dispatch ---- */
-function lucyRenderSchedule(){
-  const s=LUCY_DATA.schedule||[];
-  const rows=s.map(x=>{
-    const st=x.status||'No Sch';
-    const cls=st==='DONE'?'done':st==='OVERDUE'?'over':st==='On Track'?'track':'nosch';
-    return `<tr><td><b>${lucyEsc(x.part)}</b></td>
-      <td class="num">${x.schQty!=null?lucyFmt(x.schQty):'—'}</td>
-      <td>${lucyEsc(x.due||'—')}</td>
+/* ---------- DISPATCH ---------- */
+function lucyRenderDispatch(){
+  const d=LUCY_DATA.dispatch||[];
+  const sched=d.filter(x=>x.schedule!=null);
+  const totSch=sched.reduce((s,x)=>s+(+x.schedule||0),0);
+  const totDisp=sched.reduce((s,x)=>s+(+x.dispatched||0),0);
+  const behind=d.filter(x=>x.status==='Behind').length;
+  const kpis=`<div class="kpis">
+    <div class="kpi"><div class="l">Scheduled (pcs)</div><div class="v">${lucyFmt(totSch)}</div></div>
+    <div class="kpi"><div class="l">Dispatched (pcs)</div><div class="v">${lucyFmt(totDisp)}</div></div>
+    <div class="kpi"><div class="l">Balance (pcs)</div><div class="v">${lucyFmt(totSch-totDisp)}</div></div>
+    <div class="kpi ${behind?'bad':''}"><div class="l">Parts behind</div><div class="v">${behind}</div></div>
+  </div>`;
+  const rows=d.map(x=>{
+    const cls=x.status==='DONE'?'done':x.status==='Behind'?'over':x.status==='On Track'?'track':'nosch';
+    return `<tr><td><b>${lucyEsc(x.code)}</b></td><td>${lucyEsc(x.name)}</td>
+      <td class="num">${x.schedule!=null?lucyFmt(x.schedule):'—'}</td>
       <td class="num">${lucyFmt(x.dispatched)}</td>
       <td class="num">${x.balance!=null?lucyFmt(x.balance):'—'}</td>
-      <td><span class="pill ${cls}">${lucyEsc(st)}</span></td></tr>`;
+      <td class="num">${lucyPct(x.pct)}</td>
+      <td><span class="pill ${cls}">${lucyEsc(x.status)}</span></td>
+      <td style="font-size:11.5px;color:var(--muted)">${lucyEsc(x.remark)}</td></tr>`;
   }).join('');
-  return `<h3 class="sect">Customer schedule vs dispatch</h3>
+  return kpis+`<h3 class="sect">Schedule vs dispatch</h3>
    <div class="tbl-wrap"><table><thead><tr>
-     <th>Part</th><th class="num">Cust. Sch Qty</th><th>Due</th><th class="num">Dispatched</th><th class="num">Balance</th><th>Status</th>
-   </tr></thead><tbody>${rows||'<tr><td colspan=6>No schedule rows.</td></tr>'}</tbody></table></div>`;
+     <th>Code</th><th>Part</th><th class="num">Schedule</th><th class="num">Dispatched</th><th class="num">Balance</th><th class="num">%</th><th>Status</th><th>Remark / Plan</th>
+   </tr></thead><tbody>${rows||'<tr><td colspan=8>No dispatch rows.</td></tr>'}</tbody></table></div>
+   <p style="color:var(--muted);font-size:12px;margin-top:10px">Edit Schedule &amp; Dispatched in the DISPATCH sheet (or via AppSheet) — this view recomputes balance, % and status.</p>`;
 }
+
 </script>
 </body>
 </html>
