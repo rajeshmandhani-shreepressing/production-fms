@@ -478,6 +478,7 @@ td.num,th.num{font-family:var(--mono);text-align:right}
           <span style="color:var(--dim)">→</span>
           <input type="date" id="fmTo" style="padding:6px 9px;border:1px solid var(--line);border-radius:7px">
           <button class="fm-preset" onclick="fmSetRange('custom',this)">Apply</button>
+          <button class="fm-preset" style="background:var(--green);color:#fff;border-color:var(--green);margin-left:auto" onclick="downloadLineReport()">⬇ Download Line Report</button>
           <span id="fmRangeStatus" style="font-size:12px;color:var(--dim)"></span>
         </div>
         <div id="fm4mKpis" class="kpis" style="margin-bottom:16px"></div>
@@ -1198,7 +1199,7 @@ function showDtDay(dateKey, label){
 /* ===================== 4M BREAKDOWN BY LINE =====================
    FM_DATA holds the downtime4M object currently shown. By default it's this month's
    (DATA.downtime4M); a custom range fetches ?action=range and uses that payload's downtime4M. */
-let FM_DATA=null, FM_LABEL='this month', FM_MONTH_MODE=true;
+let FM_DATA=null, FM_LABEL='this month', FM_MONTH_MODE=true, FM_OPEN_LINE=null;
 const FM_FAMILY_COLORS={'Machine':'#d4392f','Method':'#2f6fb0','Power/Utility':'#d98a00','Other (4M note)':'#6b4fb0','Other':'#8a93a3'};
 function fmColor(f){ return FM_FAMILY_COLORS[f]||'#8a93a3'; }
 
@@ -1260,13 +1261,19 @@ function renderDowntime4M(){
     <td>${l.domCause?`<span class="pill p-bad">${l.domCause}</span>`:'—'}</td>
     <td>${l.worstDay?l.worstDay.date+' ('+l.worstDay.mins+'m)':'—'}</td></tr>`).join('');
 
-  document.getElementById('fmLinePanel').style.display='none';
+  // Keep the drilldown open across auto-refresh: if a line was open and still exists, re-render it.
+  if(FM_OPEN_LINE && lines.some(l=>l.line===FM_OPEN_LINE)){
+    fmShowLine(FM_OPEN_LINE, true);   // true = don't scroll (avoid jumping on silent refresh)
+  } else {
+    document.getElementById('fmLinePanel').style.display='none';
+  }
 }
 
 // per-line drilldown: every dated stoppage with cause, family, minutes and the exact sheet note
-function fmShowLine(lineName){
+function fmShowLine(lineName, noScroll){
   const F=FM_DATA; if(!F) return;
   const L=F.lines.find(x=>x.line===lineName); if(!L) return;
+  FM_OPEN_LINE=lineName;   // remember so auto-refresh keeps it open
   const panel=document.getElementById('fmLinePanel');
   const causeRows=Object.keys(L.byCause).sort((a,b)=>L.byCause[b]-L.byCause[a]).map(c=>
     `<tr><td>${c}</td><td>${ ({'Die Issue':'Machine','Die Change':'Method','Trial':'Method','No Power':'Power/Utility','4M':'Other (4M note)'})[c]||'Other' }</td><td class="num">${fmt(L.byCause[c])}</td><td class="num">${L.total?Math.round(L.byCause[c]/L.total*100):0}%</td></tr>`).join('');
@@ -1275,19 +1282,121 @@ function fmShowLine(lineName){
   panel.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <h4 style="margin:0">Line ${L.line} — downtime detail (${FM_LABEL})</h4>
-      <div class="hint" style="margin:0">${fmt(L.total)} min total · ${L.sharePct}% of all downtime · main: <b>${L.domCause||'—'}</b></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="hint" style="margin:0">${fmt(L.total)} min total · ${L.sharePct}% of all downtime · main: <b>${L.domCause||'—'}</b></span>
+        <button class="fm-preset" onclick="fmCloseLine()">✕ Close</button>
+      </div>
     </div>
     <h4 style="margin:16px 0 8px">Cause summary</h4>
     <div class="tbl-wrap"><table><thead><tr><th>Cause</th><th>4M family</th><th class="num">Minutes</th><th class="num">% of line</th></tr></thead><tbody>${causeRows}</tbody></table></div>
     <h4 style="margin:16px 0 8px">Every stoppage logged (biggest first — read these notes to find the root cause)</h4>
     <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Cause</th><th class="num">Minutes</th><th>Reason / note from sheet</th></tr></thead><tbody>${noteRows||'<tr><td colspan="4" class="empty">No notes.</td></tr>'}</tbody></table></div>`;
-  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+  if(!noScroll) panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+function fmCloseLine(){ FM_OPEN_LINE=null; document.getElementById('fmLinePanel').style.display='none'; }
+
+// Build a printable per-LINE report (efficiency + downtime + every reason) for the active range.
+// "This month" uses the already-loaded DATA; a custom range fetches ?action=range so production
+// and downtime cover the exact same window. Opens in a new tab -> user prints / saves as PDF.
+function downloadLineReport(){
+  const st=document.getElementById('fmRangeStatus');
+  st.textContent='Building report…'; st.style.color='var(--dim)';
+  if(FM_MONTH_MODE){
+    renderLineReport(DATA.lines, DATA.downtime4M, DATA.month||'This month');
+    st.textContent='';
+  } else {
+    // custom range: get a payload that has BOTH lines and downtime4M for the same dates
+    const f=document.getElementById('fmFrom').value, t=document.getElementById('fmTo').value;
+    let from,to;
+    if(f&&t){ from=f; to=t; }
+    else { // a 7/30 preset is active — recompute the same window
+      const toD=DATA&&DATA.lastDate?new Date(DATA.lastDate):new Date();
+      const days=(FM_LABEL.indexOf('7')>=0)?7:30;
+      from=ymdLocal(new Date(toD.getTime()-days*86400000)); to=ymdLocal(toD);
+    }
+    fetch(API_URL+'?action=range&from='+encodeURIComponent(from)+'&to='+encodeURIComponent(to))
+      .then(r=>r.json()).then(d=>{
+        if(!d||!d.lines){ st.textContent='No data for that range.'; st.style.color='var(--amber)'; return; }
+        renderLineReport(d.lines, d.downtime4M, from+' → '+to);
+        st.textContent='';
+      }).catch(()=>{ st.textContent='Could not build report.'; st.style.color='var(--red)'; });
+  }
+}
+
+function renderLineReport(lines, dt4m, periodLabel){
+  const fam=(dt4m&&dt4m.families)||[];
+  const dtByLine={}; (dt4m&&dt4m.lines||[]).forEach(l=>dtByLine[l.line]=l);
+  // merge production lines with their downtime detail, sorted by efficiency (worst first)
+  const merged=(lines||[]).map(l=>({prod:l, dt:dtByLine[l.line]||null}))
+                          .sort((a,b)=>(a.prod.achieve)-(b.prod.achieve));
+  const grandDown=(dt4m&&dt4m.grandTotal)||0;
+
+  const summaryRows=merged.map(m=>{
+    const p=m.prod, d=m.dt;
+    const eff=p.plan?Math.round(p.actual/p.plan*1000)/10:0;
+    const downMin=d?d.total:0;
+    return `<tr>
+      <td><b>${p.line}</b></td>
+      <td style="text-align:right">${fmt(p.plan)}</td>
+      <td style="text-align:right">${fmt(p.actual)}</td>
+      <td style="text-align:right">${eff}%</td>
+      <td style="text-align:right">${p.activeDays||'—'}</td>
+      <td style="text-align:right">${fmt(downMin)} min</td>
+      <td style="text-align:right">${grandDown?Math.round(downMin/grandDown*100):0}%</td>
+      <td>${d&&d.domCause?d.domCause:'—'}</td>
+      <td>${d&&d.worstDay?d.worstDay.date+' ('+d.worstDay.mins+'m)':'—'}</td></tr>`;
+  }).join('');
+
+  // a detailed block per line: cause split + every stoppage note
+  const detailBlocks=merged.map(m=>{
+    const p=m.prod, d=m.dt;
+    if(!d||!d.notes||!d.notes.length){
+      return `<h3>${p.line}</h3><p style="color:#777">No downtime logged in this period. Efficiency ${p.plan?Math.round(p.actual/p.plan*1000)/10:0}% (${fmt(p.actual)}/${fmt(p.plan)}).</p>`;
+    }
+    const causeRows=Object.keys(d.byCause).sort((a,b)=>d.byCause[b]-d.byCause[a]).map(c=>
+      `<tr><td>${c}</td><td style="text-align:right">${fmt(d.byCause[c])}</td><td style="text-align:right">${d.total?Math.round(d.byCause[c]/d.total*100):0}%</td></tr>`).join('');
+    const noteRows=d.notes.map(n=>`<tr><td>${n.date}</td><td>${n.cause}</td><td style="text-align:right">${n.mins} min</td><td>${(n.note||'—').replace(/</g,'&lt;')}</td></tr>`).join('');
+    const eff=p.plan?Math.round(p.actual/p.plan*1000)/10:0;
+    return `<h3>${p.line} <span style="font-weight:400;font-size:13px;color:#555">— efficiency ${eff}% · downtime ${fmt(d.total)} min · main cause ${d.domCause||'—'}</span></h3>
+      <table class="mini"><thead><tr><th>Cause</th><th style="text-align:right">Minutes</th><th style="text-align:right">% of line</th></tr></thead><tbody>${causeRows}</tbody></table>
+      <table class="mini"><thead><tr><th>Date</th><th>Cause</th><th style="text-align:right">Minutes</th><th>Reason / note from sheet</th></tr></thead><tbody>${noteRows}</tbody></table>`;
+  }).join('');
+
+  const html=`<!doctype html><html><head><meta charset="utf-8"><title>Line Report — ${periodLabel}</title>
+  <style>
+    body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1a2332;margin:32px;}
+    h1{margin:0 0 4px} .sub{color:#666;margin:0 0 18px;font-size:14px}
+    table{border-collapse:collapse;width:100%;margin:10px 0 22px;font-size:13px}
+    th,td{border:1px solid #d6dbe2;padding:7px 9px;text-align:left}
+    th{background:#16263d;color:#fff;font-weight:600}
+    tr:nth-child(even) td{background:#f6f8fa}
+    table.mini{font-size:12px;margin:6px 0 14px}
+    h3{margin:20px 0 6px;border-bottom:2px solid #e2231a;padding-bottom:4px}
+    .print-btn{position:fixed;top:14px;right:14px;background:#16263d;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer}
+    @media print{.print-btn{display:none}}
+  </style></head><body>
+  <button class="print-btn" onclick="window.print()">🖶 Print / Save PDF</button>
+  <h1>Shree Pressing — Line Performance &amp; Downtime Report</h1>
+  <p class="sub">Period: <b>${periodLabel}</b> · Generated ${new Date().toLocaleString()}</p>
+  <h2>Summary — all lines (worst efficiency first)</h2>
+  <table><thead><tr><th>Line</th><th style="text-align:right">Plan</th><th style="text-align:right">Actual</th>
+    <th style="text-align:right">Efficiency</th><th style="text-align:right">Active days</th>
+    <th style="text-align:right">Downtime</th><th style="text-align:right">Share</th>
+    <th>Main cause</th><th>Worst day</th></tr></thead><tbody>${summaryRows}</tbody></table>
+  <h2>Per-line detail &amp; reasons</h2>
+  ${detailBlocks}
+  </body></html>`;
+
+  const w=window.open('','_blank');
+  if(!w){ alert('Allow pop-ups to open the report, or use the on-screen drilldown.'); return; }
+  w.document.write(html); w.document.close();
 }
 
 // range switcher for the 4M section
 function fmSetRange(kind, btn){
   document.querySelectorAll('.fm-preset').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
+  FM_OPEN_LINE=null;   // close any open drilldown when the range changes
   const st=document.getElementById('fmRangeStatus');
   if(kind==='month'){
     FM_MONTH_MODE=true; FM_DATA=DATA.downtime4M||null; FM_LABEL='this month'; st.textContent='';
