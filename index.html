@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shree Pressing — Magnet Case Dashboard</title>
+<title>Shree Pressing — Production Portal FMS</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
@@ -59,6 +59,88 @@ button{font-family:inherit;cursor:pointer}
 .login-card button.submit:hover{background:var(--steel-deep)}
 .login-err{color:var(--red);font-size:12.5px;margin-top:12px;min-height:16px}
 @media(max-width:760px){.login-brandside{display:none}.login-formside{width:100%;max-width:100%}}
+
+/* ---------- PORTAL (division chooser) ---------- */
+#portal{position:fixed;inset:0;z-index:90;background:linear-gradient(150deg,#16263d 0%,#1f3a5c 55%,#2f6fb0 130%);
+  display:flex;align-items:center;justify-content:center;padding:30px}
+.portal-wrap{width:100%;max-width:760px;color:#fff;text-align:center}
+.portal-logo{height:60px;width:280px;margin:0 auto 22px;background-position:center;filter:brightness(0) invert(1);opacity:.95}
+.portal-kicker{font-family:var(--mono);font-size:12px;letter-spacing:4px;text-transform:uppercase;color:#7fb2e6}
+.portal-wrap h1{font-size:32px;font-weight:800;margin:10px 0 6px;letter-spacing:-.3px}
+.portal-wrap>.portal-head p{color:#b9cbe0;font-size:14.5px;margin-bottom:34px}
+.portal-cards{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:620px){.portal-cards{grid-template-columns:1fr}}
+.portal-card{display:flex;flex-direction:column;align-items:flex-start;gap:7px;background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:26px 24px;color:#fff;text-align:left;
+  transition:.16s;backdrop-filter:blur(6px)}
+.portal-card:hover{background:rgba(255,255,255,.13);border-color:rgba(255,255,255,.4);transform:translateY(-3px);
+  box-shadow:0 16px 40px rgba(0,0,0,.28)}
+.portal-card .pc-mark{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#2f6fb0,#1f5a96);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;margin-bottom:6px}
+.portal-card .pc-title{font-size:20px;font-weight:800}
+.portal-card .pc-sub{font-size:12.5px;color:#bcd0e6;line-height:1.4}
+.portal-card .pc-go{margin-top:10px;font-size:13px;font-weight:700;color:#9fd0ff}
+.portal-foot{margin-top:30px}
+.portal-foot button{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.22);
+  border-radius:9px;padding:9px 20px;font-weight:600;font-size:13px}
+.portal-foot button:hover{background:rgba(255,255,255,.2)}
+
+/* ---------- LUCY dashboard (scoped under #lucyApp) ---------- */
+#lucyApp{display:none;min-height:100vh}
+#lucyApp .l-side{width:230px;background:var(--navy);color:#cdd9e6;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:30}
+#lucyApp .l-side .head{padding:20px 18px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+#lucyApp .l-side .head .mark{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#2f6fb0,#1f5a96);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;margin-bottom:11px}
+#lucyApp .l-side .head b{color:#fff;font-size:14.5px;font-weight:700;display:block}
+#lucyApp .l-side .head span{font-size:11px;color:#7c91aa}
+#lucyApp .l-side nav{flex:1;padding:12px 10px;overflow-y:auto}
+#lucyApp .l-side nav .grp{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#5f748f;padding:14px 10px 6px;font-weight:700}
+#lucyApp .l-side nav button{width:100%;display:flex;align-items:center;gap:11px;background:none;border:none;color:#b6c4d4;padding:10px 12px;border-radius:8px;font-size:13.5px;font-weight:500;text-align:left;margin-bottom:2px;transition:.13s}
+#lucyApp .l-side nav button:hover{background:rgba(255,255,255,.06);color:#fff}
+#lucyApp .l-side nav button.active{background:var(--steel);color:#fff;font-weight:600;box-shadow:0 4px 12px rgba(47,111,176,.4)}
+#lucyApp .l-side nav button .ic{width:18px;text-align:center;font-size:15px;opacity:.9}
+#lucyApp .l-side .foot{padding:14px 16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:#7c91aa}
+#lucyApp .l-side .foot button{margin-top:8px;width:100%;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:8px;font-weight:600;font-size:12px}
+#lucyApp .l-side .foot button:hover{background:rgba(255,255,255,.18)}
+#lucyApp .l-content{flex:1;margin-left:230px;min-width:0}
+#lucyApp .l-top{position:sticky;top:0;z-index:20;background:rgba(244,246,249,.88);backdrop-filter:blur(10px);display:flex;align-items:center;gap:14px;padding:16px 28px;border-bottom:1px solid var(--line)}
+#lucyApp .l-top h1{font-size:18px;font-weight:800}
+#lucyApp .l-top .crumb{font-size:12px;color:var(--muted)}
+#lucyApp .l-top .spacer{flex:1}
+#lucyApp .l-top button.refresh{background:var(--steel);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-weight:600;font-size:13px}
+#lucyApp main.l-main{padding:24px 28px 70px;max-width:1340px}
+#lucyApp h3.sect{font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:var(--dim);margin:24px 0 12px;font-weight:700}
+#lucyApp .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+#lucyApp .kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+#lucyApp .kpi .l{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+#lucyApp .kpi .v{font-family:var(--mono);font-size:26px;font-weight:700;margin-top:6px}
+#lucyApp .kpi.bad .v{color:var(--red)}
+#lucyApp .kpi.good .v{color:var(--green)}
+#lucyApp .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);margin-top:14px}
+#lucyApp .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:13px;background:var(--surface);box-shadow:var(--shadow)}
+#lucyApp table{width:100%;border-collapse:collapse;font-size:13px}
+#lucyApp th,#lucyApp td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
+#lucyApp th{background:var(--surface2);font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+#lucyApp td.num,#lucyApp th.num{text-align:right;font-family:var(--mono)}
+#lucyApp tr:last-child td{border-bottom:none}
+#lucyApp .leak{color:var(--red);font-weight:700}
+#lucyApp .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+#lucyApp .pill.done{background:var(--green-dim);color:var(--green)}
+#lucyApp .pill.track{background:var(--steel-dim);color:var(--steel-deep)}
+#lucyApp .pill.over{background:var(--red-dim);color:var(--red)}
+#lucyApp .pill.nosch{background:var(--surface2);color:var(--dim)}
+#lucyApp .journey{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#lucyApp .jstep{display:flex;flex-direction:column;gap:2px;min-width:118px;border:1px solid var(--line);border-radius:11px;padding:9px 11px;background:var(--surface)}
+#lucyApp .jstep .op{font-weight:700;font-size:12.5px}
+#lucyApp .jstep .meta{font-size:11px;color:var(--muted);font-family:var(--mono)}
+#lucyApp .jstep.done{border-color:var(--green);background:var(--green-dim)}
+#lucyApp .jstep.cur{border-color:var(--steel);background:var(--steel-dim)}
+#lucyApp .jstep.pend{opacity:.6}
+#lucyApp .jstep.leakstep{border-color:var(--red);background:var(--red-dim)}
+#lucyApp .jarrow{color:var(--dim);font-weight:700}
+#lucyApp select,#lucyApp input{background:var(--surface);border:1px solid var(--line2);border-radius:8px;padding:8px 11px;font-size:13px;font-family:inherit}
+#lucyApp .loading{padding:40px;text-align:center;color:var(--muted)}
+#lucyApp .l-page{display:none}
+#lucyApp .l-page.active{display:block}
 
 /* ---------- SHELL: sidebar + main ---------- */
 #app{display:none;min-height:100vh}
@@ -270,8 +352,8 @@ td.num,th.num{font-family:var(--mono);text-align:right}
   <div class="login-brandside">
     <div class="sp-logo-dark" style="height:66px;width:300px;margin:0 0 26px;background-position:left center"></div>
     <div class="kicker">Shree Pressing</div>
-    <h1>Magnet Case<br>Production Dashboard</h1>
-    <p>Live shop-floor monitoring — plan vs actual output, line performance, downtime and operator activity, updated through the day.</p>
+    <h1>Production Portal<br>FMS</h1>
+    <p>Live shop-floor monitoring across divisions — plan vs actual output, WIP, dispatch and analytics, updated through the day.</p>
     <div class="feat">
       <div><i></i> Real-time daily output tracking</div>
       <div><i></i> Line, part &amp; operator analytics</div>
@@ -280,7 +362,7 @@ td.num,th.num{font-family:var(--mono);text-align:right}
   </div>
   <div class="login-formside">
     <div class="login-card">
-      <div class="logo"><div class="mark sp-mark-img"></div><div><b>Shree Pressing</b><span>Magnet Case Division</span></div></div>
+      <div class="logo"><div class="mark sp-mark-img"></div><div><b>Shree Pressing</b><span>Production Portal — FMS</span></div></div>
       <h2>Sign in</h2>
       <div class="sub">Enter your credentials to access the dashboard.</div>
       <div class="field"><label>Username</label><input id="user" type="text" autocomplete="username" placeholder="Enter username"></div>
@@ -289,6 +371,72 @@ td.num,th.num{font-family:var(--mono);text-align:right}
       <div class="login-err" id="loginErr"></div>
     </div>
   </div>
+</div>
+
+<!-- ============ PORTAL (division chooser) ============ -->
+<div id="portal" style="display:none">
+  <div class="portal-wrap">
+    <div class="portal-head">
+      <div class="sp-logo-dark portal-logo"></div>
+      <div class="portal-kicker">Shree Pressing</div>
+      <h1>Production Portal — FMS</h1>
+      <p>Choose a division to open its live dashboard.</p>
+    </div>
+    <div class="portal-cards">
+      <button class="portal-card" onclick="bootLucy()">
+        <span class="pc-mark">L</span>
+        <span class="pc-title">LUCY Cell</span>
+        <span class="pc-sub">Batch production · WIP · scrap · dispatch</span>
+        <span class="pc-go">Open →</span>
+      </button>
+      <button class="portal-card" onclick="bootMagnetCase()">
+        <span class="pc-mark">M</span>
+        <span class="pc-title">Magnet Case</span>
+        <span class="pc-sub">SP L15 lines · live output · downtime · year view</span>
+        <span class="pc-go">Open →</span>
+      </button>
+    </div>
+    <div class="portal-foot"><button onclick="logout()">Sign out</button></div>
+  </div>
+</div>
+
+<!-- ============ LUCY APP (separate division dashboard) ============ -->
+<div id="lucyApp">
+ <div class="layout">
+  <aside class="l-side">
+    <div class="head">
+      <div class="mark">L</div>
+      <b>Shree Pressing</b><span>LUCY Cell Dashboard</span>
+    </div>
+    <nav>
+      <div class="grp">Monitor</div>
+      <button class="active" data-ltab="open" onclick="lucyTab(this)"><span class="ic">▦</span>All Open Batches</button>
+      <button data-ltab="journey" onclick="lucyTab(this)"><span class="ic">⇄</span>Batch Journey</button>
+      <button data-ltab="part" onclick="lucyTab(this)"><span class="ic">◧</span>By Part Type</button>
+      <div class="grp">Plan</div>
+      <button data-ltab="schedule" onclick="lucyTab(this)"><span class="ic">▤</span>Schedule &amp; Dispatch</button>
+    </nav>
+    <div class="foot">
+      <div id="lucyMeta">—</div>
+      <button onclick="showPortal()">← Switch division</button>
+      <button onclick="logout()">Sign out</button>
+    </div>
+  </aside>
+  <div class="l-content">
+    <header class="l-top">
+      <div><h1 id="lucyTitle">All Open Batches</h1><div class="crumb" id="lucyCrumb">Live WIP monitor</div></div>
+      <div class="spacer"></div>
+      <button class="refresh" onclick="lucyLoad(true)">↻ Refresh</button>
+    </header>
+    <main class="l-main">
+      <div id="lucyLoading" class="loading">Loading LUCY production data…</div>
+      <section class="l-page active" id="lpage-open"></section>
+      <section class="l-page" id="lpage-journey"></section>
+      <section class="l-page" id="lpage-part"></section>
+      <section class="l-page" id="lpage-schedule"></section>
+    </main>
+  </div>
+ </div>
 </div>
 
 <!-- ============ APP ============ -->
@@ -718,11 +866,22 @@ function logout(reason){
 
 function enterApp(){
   document.getElementById('login').style.display='none';
-  document.getElementById('app').style.display='block';
   // if there's no login stamp (e.g. restored older session), stamp now so the cap still applies
   if(!sessionStorage.getItem('mc_login_at')) sessionStorage.setItem('mc_login_at', String(Date.now()));
   startSessionWatch();
-  loadMonths();
+  showPortal();           // <-- show division chooser instead of booting straight into Magnet Case
+}
+
+// ===== Division portal (added) =====
+function showPortal(){
+  document.getElementById('app').style.display='none';
+  if(typeof lucyTeardown==='function') lucyTeardown();
+  document.getElementById('portal').style.display='flex';
+}
+function bootMagnetCase(){
+  document.getElementById('portal').style.display='none';
+  document.getElementById('app').style.display='block';
+  loadMonths();           // original Magnet Case data load — untouched
 }
 
 /* ================== SESSION WATCH (idle + absolute timeout) ================== */
@@ -1872,6 +2031,171 @@ function repPVD(){
     <h2>Month-by-month (year)</h2>
     <table><thead><tr><th>Month</th><th style="text-align:right">Produced</th><th style="text-align:right">Dispatched</th><th style="text-align:right">Net</th><th style="text-align:right">Disp/Prod</th></tr></thead><tbody>${monRows||'<tr><td colspan=5>No data</td></tr>'}</tbody></table>
     `+repSign();
-}</script>
+}/* ====================================================================
+   LUCY CELL DASHBOARD MODULE  (fully isolated from Magnet Case above)
+   --------------------------------------------------------------------
+   Paste your deployed LUCY Apps Script /exec URL below. It must serve
+   the Single-Ledger Google Sheet as JSON (see Lucy_Backend.gs).
+   ==================================================================== */
+const LUCY_API_URL = "https://script.google.com/macros/s/AKfycbw2O6tBvmRsN9TgnDTJav031onCp84C7rDH8aud8-rFLQLJy0--4WOdxK9fKuZ7QVAG9A/exec";
+
+let LUCY_DATA=null, lucyTimer=null, lucyActiveTab='open';
+function lucyTeardown(){ if(lucyTimer){clearInterval(lucyTimer);lucyTimer=null;} document.getElementById('lucyApp').style.display='none'; }
+function bootLucy(){
+  document.getElementById('portal').style.display='none';
+  document.getElementById('lucyApp').style.display='block';
+  lucyActiveTab='open';
+  document.querySelectorAll('#lucyApp .l-side nav button').forEach(b=>b.classList.toggle('active',b.dataset.ltab==='open'));
+  lucyLoad();
+  if(lucyTimer)clearInterval(lucyTimer);
+  lucyTimer=setInterval(()=>lucyLoad(true),30000);
+}
+function lucyTab(btn){
+  document.querySelectorAll('#lucyApp .l-side nav button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  lucyActiveTab=btn.dataset.ltab;
+  const titles={open:['All Open Batches','Live WIP monitor'],journey:['Batch Journey','RM → dispatch traveller view'],part:['By Part Type','All batches for one part'],schedule:['Schedule & Dispatch','Customer schedule vs shipped']};
+  document.getElementById('lucyTitle').textContent=titles[lucyActiveTab][0];
+  document.getElementById('lucyCrumb').textContent=titles[lucyActiveTab][1];
+  lucyRender();
+}
+function lucyLoad(silent){
+  if(!silent) document.getElementById('lucyLoading').style.display='block';
+  if(LUCY_API_URL.indexOf('PASTE_')===0){
+    document.getElementById('lucyLoading').innerHTML='⚠ LUCY_API_URL not set yet. Deploy Lucy_Backend.gs and paste its /exec URL into index.html (LUCY_API_URL).';
+    return;
+  }
+  fetch(LUCY_API_URL+'?action=data').then(r=>r.json()).then(d=>{
+    LUCY_DATA=d; document.getElementById('lucyLoading').style.display='none';
+    document.getElementById('lucyMeta').textContent='Updated '+(d.generated||'');
+    lucyRender();
+  }).catch(()=>{ document.getElementById('lucyLoading').innerHTML='Cannot reach LUCY server. Check LUCY_API_URL / deployment.'; });
+}
+function lucyEsc(s){return (s==null?'':String(s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function lucyFmt(n){n=Number(n||0);return n.toLocaleString('en-IN');}
+
+function lucyRender(){
+  if(!LUCY_DATA)return;
+  document.querySelectorAll('#lucyApp .l-page').forEach(p=>p.classList.remove('active'));
+  const pg=document.getElementById('lpage-'+lucyActiveTab); pg.classList.add('active');
+  if(lucyActiveTab==='open') pg.innerHTML=lucyRenderOpen();
+  else if(lucyActiveTab==='journey') pg.innerHTML=lucyRenderJourney();
+  else if(lucyActiveTab==='part') pg.innerHTML=lucyRenderPart();
+  else if(lucyActiveTab==='schedule') pg.innerHTML=lucyRenderSchedule();
+}
+
+/* ---- View 1: all open batches (where is everything now) ---- */
+function lucyRenderOpen(){
+  const b=LUCY_DATA.batches||[];
+  const open=b.filter(x=>x.nextOp && x.nextOp!=='FG / DISPATCH');
+  const totLeak=b.reduce((s,x)=>s+(+x.leak||0),0);
+  const totRej=b.reduce((s,x)=>s+(+x.rejected||0),0);
+  const totRew=b.reduce((s,x)=>s+(+x.rework||0),0);
+  const kpis=`<div class="kpis">
+    <div class="kpi"><div class="l">Open Batches</div><div class="v">${open.length}</div></div>
+    <div class="kpi ${totLeak>0?'bad':''}"><div class="l">Total WIP Leak (pcs)</div><div class="v">${lucyFmt(totLeak)}</div></div>
+    <div class="kpi ${totRej>0?'bad':''}"><div class="l">Total Rejected (pcs)</div><div class="v">${lucyFmt(totRej)}</div></div>
+    <div class="kpi"><div class="l">Open Rework (pcs)</div><div class="v">${lucyFmt(totRew)}</div></div>
+  </div>`;
+  const rows=b.map(x=>`<tr>
+    <td><b>${lucyEsc(x.batchId)}</b></td>
+    <td>${lucyEsc(x.part)}</td>
+    <td>${lucyEsc(x.lastOp)}</td>
+    <td class="num">${lucyFmt(x.goodAtLast)}</td>
+    <td class="num ${(+x.rejected)>0?'leak':''}">${lucyFmt(x.rejected)}</td>
+    <td class="num">${lucyFmt(x.rework)}</td>
+    <td class="num ${(+x.leak)>0?'leak':''}">${lucyFmt(x.leak)}</td>
+    <td>${x.nextOp==='FG / DISPATCH'?'<span class="pill done">FG / DISPATCH</span>':lucyEsc(x.nextOp)}</td>
+  </tr>`).join('');
+  return kpis+`<h3 class="sect">Live batch status</h3>
+   <div class="tbl-wrap"><table><thead><tr>
+     <th>Batch</th><th>Part</th><th>Last Op Done</th><th class="num">Good Qty</th>
+     <th class="num">Rejected</th><th class="num">Rework</th><th class="num">WIP Leak</th><th>Next Op Due</th>
+   </tr></thead><tbody>${rows||'<tr><td colspan=8>No batches logged yet.</td></tr>'}</tbody></table></div>
+   <p style="color:var(--muted);font-size:12px;margin-top:10px">Red WIP Leak = pieces left a station unaccounted. Resolve before the batch moves on.</p>`;
+}
+
+/* ---- View 2: one batch full journey (RM -> dispatch strip) ---- */
+function lucyRenderJourney(){
+  const b=LUCY_DATA.batches||[];
+  const sel=`<div style="margin-bottom:16px"><label style="font-size:12px;font-weight:600;color:var(--muted);margin-right:8px">Batch</label>
+    <select id="lucyBatchSel" onchange="lucyDrawJourney(this.value)">
+    <option value="">— choose a batch —</option>
+    ${b.map(x=>`<option value="${lucyEsc(x.batchId)}">${lucyEsc(x.batchId)} · ${lucyEsc(x.part)}</option>`).join('')}
+    </select></div><div id="lucyJourneyBox"></div>`;
+  setTimeout(()=>{ const f=b[0]; if(f){const s=document.getElementById('lucyBatchSel'); if(s){s.value=f.batchId; lucyDrawJourney(f.batchId);}} },0);
+  return `<h3 class="sect">Batch journey</h3>`+sel;
+}
+function lucyDrawJourney(batchId){
+  const box=document.getElementById('lucyJourneyBox'); if(!box)return;
+  if(!batchId){box.innerHTML='';return;}
+  const route=(LUCY_DATA.routes||[])[ (LUCY_DATA.batchPart||{})[batchId] ]||[];
+  const events=(LUCY_DATA.events||[]).filter(e=>e.batchId===batchId);
+  const bMeta=(LUCY_DATA.batches||[]).find(x=>x.batchId===batchId)||{};
+  const evBySeq={}; events.forEach(e=>{evBySeq[+e.seq]=e;});
+  const maxDone=events.reduce((m,e)=>Math.max(m,+e.seq||0),0);
+  const steps=route.map(r=>{
+    const ev=evBySeq[+r.seq];
+    let cls='pend',meta='pending';
+    if(ev){ const leak=(+ev.qtyIn||0)-(+ev.good||0)-(+ev.rejected||0)-(+ev.rework||0);
+      cls = leak>0?'leakstep':(+r.seq===maxDone?'cur':'done');
+      meta = `out ${lucyFmt(ev.good)}${(+ev.rejected)?' · rej '+lucyFmt(ev.rejected):''}${leak>0?' · LEAK '+lucyFmt(leak):''}`;
+    }
+    return `<div class="jstep ${cls}"><span class="op">${r.seq}. ${lucyEsc(r.op)}</span><span class="meta">${lucyEsc(r.cell)}</span><span class="meta">${meta}</span></div>`;
+  }).join('<span class="jarrow">→</span>');
+  box.innerHTML=`<div class="panel"><div style="margin-bottom:12px;font-size:13px;color:var(--muted)">
+      <b style="color:var(--ink);font-size:15px">${lucyEsc(batchId)}</b> · ${lucyEsc(bMeta.part||'')} ·
+      next: ${bMeta.nextOp==='FG / DISPATCH'?'<span class="pill done">FG / DISPATCH</span>':lucyEsc(bMeta.nextOp||'—')}</div>
+      <div class="journey">${steps||'No route defined for this part.'}</div></div>`;
+}
+
+/* ---- View 3: one part across all its batches ---- */
+function lucyRenderPart(){
+  const parts=[...new Set((LUCY_DATA.batches||[]).map(x=>x.part))];
+  const sel=`<div style="margin-bottom:16px"><label style="font-size:12px;font-weight:600;color:var(--muted);margin-right:8px">Part</label>
+    <select id="lucyPartSel" onchange="lucyDrawPart(this.value)">
+    <option value="">— choose a part —</option>
+    ${parts.map(p=>`<option value="${lucyEsc(p)}">${lucyEsc(p)}</option>`).join('')}
+    </select></div><div id="lucyPartBox"></div>`;
+  setTimeout(()=>{ if(parts[0]){const s=document.getElementById('lucyPartSel'); if(s){s.value=parts[0];lucyDrawPart(parts[0]);}} },0);
+  return `<h3 class="sect">By part type</h3>`+sel;
+}
+function lucyDrawPart(part){
+  const box=document.getElementById('lucyPartBox'); if(!box)return; if(!part){box.innerHTML='';return;}
+  const rows=(LUCY_DATA.batches||[]).filter(x=>x.part===part);
+  const tot=rows.reduce((a,x)=>({g:a.g+(+x.goodAtLast||0),r:a.r+(+x.rejected||0),l:a.l+(+x.leak||0)}),{g:0,r:0,l:0});
+  box.innerHTML=`<div class="kpis">
+      <div class="kpi"><div class="l">Batches</div><div class="v">${rows.length}</div></div>
+      <div class="kpi"><div class="l">Good (latest op)</div><div class="v">${lucyFmt(tot.g)}</div></div>
+      <div class="kpi ${tot.r>0?'bad':''}"><div class="l">Rejected</div><div class="v">${lucyFmt(tot.r)}</div></div>
+      <div class="kpi ${tot.l>0?'bad':''}"><div class="l">WIP Leak</div><div class="v">${lucyFmt(tot.l)}</div></div>
+    </div>
+    <div class="tbl-wrap" style="margin-top:14px"><table><thead><tr>
+      <th>Batch</th><th>Last Op</th><th class="num">Good</th><th class="num">Rejected</th><th class="num">Leak</th><th>Next Op</th>
+    </tr></thead><tbody>${rows.map(x=>`<tr><td><b>${lucyEsc(x.batchId)}</b></td><td>${lucyEsc(x.lastOp)}</td>
+      <td class="num">${lucyFmt(x.goodAtLast)}</td><td class="num ${(+x.rejected)>0?'leak':''}">${lucyFmt(x.rejected)}</td>
+      <td class="num ${(+x.leak)>0?'leak':''}">${lucyFmt(x.leak)}</td>
+      <td>${x.nextOp==='FG / DISPATCH'?'<span class="pill done">FG</span>':lucyEsc(x.nextOp)}</td></tr>`).join('')||'<tr><td colspan=6>No batches.</td></tr>'}</tbody></table></div>`;
+}
+
+/* ---- View 4: schedule vs dispatch ---- */
+function lucyRenderSchedule(){
+  const s=LUCY_DATA.schedule||[];
+  const rows=s.map(x=>{
+    const st=x.status||'No Sch';
+    const cls=st==='DONE'?'done':st==='OVERDUE'?'over':st==='On Track'?'track':'nosch';
+    return `<tr><td><b>${lucyEsc(x.part)}</b></td>
+      <td class="num">${x.schQty!=null?lucyFmt(x.schQty):'—'}</td>
+      <td>${lucyEsc(x.due||'—')}</td>
+      <td class="num">${lucyFmt(x.dispatched)}</td>
+      <td class="num">${x.balance!=null?lucyFmt(x.balance):'—'}</td>
+      <td><span class="pill ${cls}">${lucyEsc(st)}</span></td></tr>`;
+  }).join('');
+  return `<h3 class="sect">Customer schedule vs dispatch</h3>
+   <div class="tbl-wrap"><table><thead><tr>
+     <th>Part</th><th class="num">Cust. Sch Qty</th><th>Due</th><th class="num">Dispatched</th><th class="num">Balance</th><th>Status</th>
+   </tr></thead><tbody>${rows||'<tr><td colspan=6>No schedule rows.</td></tr>'}</tbody></table></div>`;
+}
+</script>
 </body>
 </html>
