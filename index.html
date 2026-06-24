@@ -152,6 +152,9 @@ button{font-family:inherit;cursor:pointer}
 #lucyApp .pcard-now{font-size:12px;color:var(--muted)}
 #lucyApp .pcard .journey{margin-top:10px}
 #lucyApp .pill.over{display:inline-block;margin-bottom:6px}
+#lucyApp .lbanner{background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;margin:14px 0 4px}
+#lucyApp .lnext{font-size:12.5px;color:var(--muted)}
+#lucyApp .lnext b{color:var(--steel-deep)}
 
 /* ---------- SHELL: sidebar + main ---------- */
 #app{display:none;min-height:100vh}
@@ -421,8 +424,9 @@ td.num,th.num{font-family:var(--mono);text-align:right}
     </div>
     <nav>
       <div class="grp">Monitor</div>
-      <button class="active" data-ltab="pipeline" onclick="lucyTab(this)"><span class="ic">▦</span>Pipeline (live)</button>
-      <button data-ltab="jobcard" onclick="lucyTab(this)"><span class="ic">▤</span>Job Card / Routes</button>
+      <button class="active" data-ltab="board" onclick="lucyTab(this)"><span class="ic">▦</span>Live Board</button>
+      <button data-ltab="jobcard" onclick="lucyTab(this)"><span class="ic">▤</span>Job Card</button>
+      <button data-ltab="daily" onclick="lucyTab(this)"><span class="ic">▣</span>Daily Analysis</button>
       <div class="grp">Plan</div>
       <button data-ltab="dispatch" onclick="lucyTab(this)"><span class="ic">⇄</span>Schedule &amp; Dispatch</button>
     </nav>
@@ -440,8 +444,9 @@ td.num,th.num{font-family:var(--mono);text-align:right}
     </header>
     <main class="l-main">
       <div id="lucyLoading" class="loading">Loading LUCY production data…</div>
-      <section class="l-page active" id="lpage-pipeline"></section>
+      <section class="l-page active" id="lpage-board"></section>
       <section class="l-page" id="lpage-jobcard"></section>
+      <section class="l-page" id="lpage-daily"></section>
       <section class="l-page" id="lpage-dispatch"></section>
     </main>
   </div>
@@ -2044,29 +2049,30 @@ function repPVD(){
 /* ====================================================================
    LUCY CELL DASHBOARD MODULE  (fully isolated from Magnet Case above)
    --------------------------------------------------------------------
-   Model: PART + OPERATION STAGE (no batch IDs).
-   Paste your deployed LUCY Apps Script /exec URL below (Lucy_Backend.gs).
+   Connected batch model. Reads Lucy_Backend.gs v3 JSON:
+   { routes, board, stationLoad, bottleneck, daily, schedule }
+   Paste your deployed LUCY Apps Script /exec URL below.
    ==================================================================== */
-const LUCY_API_URL = "https://script.google.com/macros/s/AKfycbxwrTG_YSntR05hbdT1qe9CxSI6A60ERv0XKv8-HOStNdgTFjO5F2dILrNKnxs8QNZ3Wg/exec";
+const LUCY_API_URL = "https://script.google.com/macros/s/AKfycbwWiRZu3niRCyk2Zf0al8bEVwbpsSifkbjq44Wew54K7D6MhNpTws2YQZKHPtlucuxoTg/exec";
 
-let LUCY_DATA=null, lucyTimer=null, lucyActiveTab='pipeline', lucyView='cards', lucyJobPart='';
+let LUCY_DATA=null, lucyTimer=null, lucyActiveTab='board', lucyJobBatch='', lucyDailyDate='';
 function lucyTeardown(){ if(lucyTimer){clearInterval(lucyTimer);lucyTimer=null;} document.getElementById('lucyApp').style.display='none'; }
 function bootLucy(){
   document.getElementById('portal').style.display='none';
   document.getElementById('lucyApp').style.display='block';
-  lucyActiveTab='pipeline';
-  document.querySelectorAll('#lucyApp .l-side nav button').forEach(b=>b.classList.toggle('active',b.dataset.ltab==='pipeline'));
+  lucyActiveTab='board';
+  document.querySelectorAll('#lucyApp .l-side nav button').forEach(b=>b.classList.toggle('active',b.dataset.ltab==='board'));
   lucyLoad();
   if(lucyTimer)clearInterval(lucyTimer);
   lucyTimer=setInterval(()=>lucyLoad(true),30000);
 }
 function lucyTab(btn){
   document.querySelectorAll('#lucyApp .l-side nav button').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  lucyActiveTab=btn.dataset.ltab;
-  const t={pipeline:['Pipeline','Live pieces at each stage — red = unaccounted'],
-           jobcard:['Job Card / Routes','Process route per part — show this to a customer'],
-           dispatch:['Schedule & Dispatch','Customer schedule vs shipped (you fill daily)']};
+  btn.classList.add('active'); lucyActiveTab=btn.dataset.ltab;
+  const t={board:['Live Board','Every open batch — where it is, next station, leaks'],
+           jobcard:['Digital Job Card','Search any batch — full status, who started it & when, every step live'],
+           daily:['Daily Analysis','Day-wise output by zone, shift and totals'],
+           dispatch:['Schedule & Dispatch','Customer schedule vs FG ready']};
   document.getElementById('lucyTitle').textContent=t[lucyActiveTab][0];
   document.getElementById('lucyCrumb').textContent=t[lucyActiveTab][1];
   lucyRender();
@@ -2080,148 +2086,185 @@ function lucyLoad(silent){
   fetch(LUCY_API_URL+'?action=data').then(r=>r.json()).then(d=>{
     LUCY_DATA=d; document.getElementById('lucyLoading').style.display='none';
     document.getElementById('lucyMeta').textContent='Updated '+(d.generated||'');
+    if(!lucyDailyDate){ const days=Object.keys((d.daily||{}).dayTot||{}); lucyDailyDate=days.sort().pop()||''; }
     lucyRender();
   }).catch(()=>{ document.getElementById('lucyLoading').innerHTML='Cannot reach LUCY server. Check LUCY_API_URL / deployment.'; });
 }
 function lucyEsc(s){return (s==null?'':String(s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 function lucyFmt(n){n=Number(n||0);return n.toLocaleString('en-IN');}
-function lucyPct(p){return p==null?'—':Math.round(p*100)+'%';}
 
 function lucyRender(){
   if(!LUCY_DATA)return;
   document.querySelectorAll('#lucyApp .l-page').forEach(p=>p.classList.remove('active'));
   const pg=document.getElementById('lpage-'+lucyActiveTab); if(!pg)return; pg.classList.add('active');
-  if(lucyActiveTab==='pipeline') pg.innerHTML=lucyRenderPipeline();
+  if(lucyActiveTab==='board') pg.innerHTML=lucyRenderBoard();
   else if(lucyActiveTab==='jobcard') pg.innerHTML=lucyRenderJobcard();
+  else if(lucyActiveTab==='daily') pg.innerHTML=lucyRenderDaily();
   else if(lucyActiveTab==='dispatch') pg.innerHTML=lucyRenderDispatch();
 }
 
-/* ---------- PIPELINE (cards <-> table toggle) ---------- */
-function lucySetView(v){ lucyView=v; document.getElementById('lpage-pipeline').innerHTML=lucyRenderPipeline(); }
-function lucyRenderPipeline(){
-  const P=LUCY_DATA.pipeline||[];
-  const active=P.filter(x=>x.furthestOp!=='Not started');
-  const leaks=P.filter(x=>x.worstLeak>0);
-  const totLeak=P.reduce((s,x)=>s+(+x.worstLeak||0),0);
-  const totRej=P.reduce((s,x)=>s+(+x.totalRejected||0),0);
+/* ---------- LIVE BOARD ---------- */
+function lucyRenderBoard(){
+  const B=LUCY_DATA.board||[];
+  const open=B.filter(x=>x.status!=='READY');
+  const leaks=B.filter(x=>x.status==='LEAK');
+  const ready=B.filter(x=>x.status==='READY');
+  const totLeak=B.reduce((s,x)=>s+(+x.wipLeak||0),0);
   const kpis=`<div class="kpis">
-    <div class="kpi"><div class="l">Parts in progress</div><div class="v">${active.length}</div></div>
-    <div class="kpi ${leaks.length?'bad':'good'}"><div class="l">Parts with leak</div><div class="v">${leaks.length}</div></div>
+    <div class="kpi"><div class="l">Open batches</div><div class="v">${open.length}</div></div>
+    <div class="kpi ${leaks.length?'bad':'good'}"><div class="l">Batches leaking</div><div class="v">${leaks.length}</div></div>
+    <div class="kpi ${ready.length?'good':''}"><div class="l">Ready to dispatch</div><div class="v">${ready.length}</div></div>
     <div class="kpi ${totLeak>0?'bad':''}"><div class="l">Total unaccounted (pcs)</div><div class="v">${lucyFmt(totLeak)}</div></div>
-    <div class="kpi ${totRej>0?'bad':''}"><div class="l">Total rejected (pcs)</div><div class="v">${lucyFmt(totRej)}</div></div>
   </div>`;
-  const toggle=`<div style="display:flex;gap:8px;margin:18px 0 4px">
-     <button class="lviewbtn ${lucyView==='cards'?'on':''}" onclick="lucySetView('cards')">▦ Cards</button>
-     <button class="lviewbtn ${lucyView==='table'?'on':''}" onclick="lucySetView('table')">▤ Table</button></div>`;
-  return kpis+toggle+(lucyView==='cards'?lucyPipeCards(P):lucyPipeTable(P));
-}
-function lucyPipeCards(P){
-  // show parts in progress first, leaks at very top
-  const order=[...P].sort((a,b)=>(b.worstLeak>0)-(a.worstLeak>0) || (b.furthestOp!=='Not started')-(a.furthestOp!=='Not started'));
+  // bottleneck banner
+  const bn=LUCY_DATA.bottleneck;
+  const bnBanner = bn ? `<div class="lbanner">Bottleneck right now: <b>${lucyEsc(bn.loc)}</b> (${bn.open} batch${bn.open>1?'es':''} waiting)</div>` : '';
+  // sort: leaks first, then moving, then ready
+  const rank={'LEAK':0,'Moving':1,'Not started':2,'READY':3};
+  const order=[...B].sort((a,b)=>(rank[a.status]??9)-(rank[b.status]??9));
   const cards=order.map(x=>{
     const strip=x.stages.map((s,i)=>{
       const next=x.stages[i+1];
       let cls='pend';
-      if(s.good>0){ cls='done'; }
-      // mark current = last with good>0
-      const isLast = s.good>0 && (!next || next.good===0);
-      if(isLast) cls='cur';
-      // leak marker: this stage feeds a downstream drop
-      let leakHere=false;
-      if(next && s.good>0 && next.good>0 && (s.good-next.good-next.rejected)>0) leakHere=true;
-      if(leakHere) cls='leakstep';
-      const meta = s.good>0 ? lucyFmt(s.good)+(s.rejected?(' · rej '+lucyFmt(s.rejected)):'') : '·';
-      return `<div class="jstep ${cls}"><span class="op">${lucyEsc(s.op)}</span><span class="meta">${lucyEsc(s.cell.replace(' Cell','').replace(' Shop',''))}</span><span class="meta">${meta}</span></div>`;
+      if(s.good>0) cls='done';
+      if(s.current) cls='cur';
+      if(next && s.good>0 && next.good>0 && (s.good-next.good-next.rejected)>0) cls='leakstep';
+      const meta=s.good>0?lucyFmt(s.good)+(s.rejected?(' · rej '+lucyFmt(s.rejected)):''):'·';
+      return `<div class="jstep ${cls}"><span class="op">${lucyEsc(s.op)}</span><span class="meta">${lucyEsc(s.zone)}</span><span class="meta">${meta}</span></div>`;
     }).join('<span class="jarrow">→</span>');
-    const leakBadge = x.worstLeak>0 ? `<span class="pill over">⚠ ${lucyFmt(x.worstLeak)} unaccounted (${lucyEsc(x.leakAt)})</span>` : '';
+    const statusPill = x.status==='LEAK'?`<span class="pill over">⚠ ${lucyFmt(x.wipLeak)} unaccounted</span>`
+                     : x.status==='READY'?`<span class="pill done">✓ Ready to dispatch</span>`
+                     : `<span class="pill track">${lucyEsc(x.status)}</span>`;
     return `<div class="pcard">
        <div class="pcard-head">
-         <div><b>${lucyEsc(x.code)}</b> <span class="pcard-name">${lucyEsc(x.name)}</span></div>
-         <div class="pcard-now">Furthest: <b>${lucyEsc(x.furthestOp)}</b></div>
+         <div><b>${lucyEsc(x.batchNo)}</b> <span class="pcard-name">${lucyEsc(x.partName||x.part)} · ${lucyEsc(x.part)} · qty ${lucyFmt(x.qty)}</span></div>
+         <div class="pcard-now">Now: <b>${lucyEsc(x.currentOp)}</b> (${lucyEsc(x.zone)})</div>
        </div>
-       ${leakBadge}
+       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:2px 0 8px">
+         ${statusPill}
+         <span class="lnext">Next: <b>${lucyEsc(x.nextStation)}</b></span>
+       </div>
        <div class="journey">${strip}</div>
      </div>`;
   }).join('');
-  return `<div class="pcards">${cards}</div>`;
-}
-function lucyPipeTable(P){
-  const rows=P.map(x=>{
-    const cells=x.stages.map(s=>`<td class="num ${s.good>0?'':'dim'}">${s.good>0?lucyFmt(s.good):'·'}</td>`).join('');
-    return `<tr>
-      <td><b>${lucyEsc(x.code)}</b></td><td>${lucyEsc(x.name)}</td>
-      <td>${lucyEsc(x.furthestOp)}</td>
-      <td class="num ${x.totalRejected>0?'leak':''}">${lucyFmt(x.totalRejected)}</td>
-      <td class="num ${x.worstLeak>0?'leak':''}">${x.worstLeak>0?lucyFmt(x.worstLeak):'—'}</td>
-      <td>${x.leakAt?lucyEsc(x.leakAt):'—'}</td>
-    </tr>`;
-  }).join('');
-  return `<div class="tbl-wrap" style="margin-top:8px"><table><thead><tr>
-     <th>Code</th><th>Part</th><th>Furthest Op</th><th class="num">Rejected</th><th class="num">Unaccounted</th><th>Leak between</th>
-   </tr></thead><tbody>${rows||'<tr><td colspan=6>No data yet.</td></tr>'}</tbody></table></div>
-   <p style="color:var(--muted);font-size:12px;margin-top:10px">"Unaccounted" = pieces that left one station but didn't arrive at the next, after subtracting logged rejections. Chase these before dispatch.</p>`;
+  return kpis+bnBanner+`<div class="pcards">${cards||'<p style="color:var(--muted)">No batches yet. Start one in the sheet (NEW BATCH ▸ Start New Batch).</p>'}</div>`;
 }
 
-/* ---------- JOB CARD / ROUTES (customer-presentable) ---------- */
+/* ---------- DIGITAL JOB CARD (searchable, no printing) ---------- */
+function lucyJobSearch(v){ lucyJobBatch=(v||'').trim(); document.getElementById('lpage-jobcard').innerHTML=lucyRenderJobcard(); 
+  const i=document.getElementById('ljobSearch'); if(i){ i.focus(); const val=i.value; i.value=''; i.value=val; } }
 function lucyRenderJobcard(){
-  const routes=LUCY_DATA.routes||{};
-  const codes=Object.keys(routes);
-  if(!lucyJobPart || !routes[lucyJobPart]) lucyJobPart=codes[0]||'';
-  const sel=`<div style="margin-bottom:16px"><label style="font-size:12px;font-weight:600;color:var(--muted);margin-right:8px">Part</label>
-    <select onchange="lucyJobPart=this.value;document.getElementById('lpage-jobcard').innerHTML=lucyRenderJobcard()">
-    ${codes.map(c=>`<option value="${lucyEsc(c)}" ${c===lucyJobPart?'selected':''}>${lucyEsc(c)} · ${lucyEsc(routes[c].name)}</option>`).join('')}
-    </select></div>`;
-  const R=routes[lucyJobPart];
-  if(!R) return `<h3 class="sect">Job card</h3>${sel}<p style="color:var(--muted)">No route.</p>`;
-  // group consecutive steps by cell for a clean router look
-  const strip=R.steps.map((s,i)=>{
-    return `<div class="jstep done" style="min-width:130px">
-       <span class="op">${s.seq}. ${lucyEsc(s.op)}</span>
-       <span class="meta">${lucyEsc(s.cell)}</span>
-       <span class="meta">${lucyEsc(s.owner)}${s.machine?(' · '+lucyEsc(s.machine)):''}</span></div>`;
-  }).join('<span class="jarrow">→</span>');
-  const tbl=R.steps.map(s=>`<tr><td class="num">${s.seq}</td><td><b>${lucyEsc(s.op)}</b></td>
-     <td>${lucyEsc(s.cell)}</td><td>${lucyEsc(s.owner)}</td><td>${lucyEsc(s.machine||'—')}</td></tr>`).join('');
-  return `<h3 class="sect">Job card — process route</h3>${sel}
+  const B=LUCY_DATA.board||[];
+  // resolve current selection: exact batchNo match (case-insensitive), else first
+  let b=null;
+  if(lucyJobBatch){ const q=lucyJobBatch.toLowerCase();
+    b=B.find(x=>x.batchNo.toLowerCase()===q) || B.find(x=>x.batchNo.toLowerCase().indexOf(q)>=0); }
+  if(!b) b=B[0]||null;
+  const opts=B.map(x=>`<option value="${lucyEsc(x.batchNo)}" ${b&&x.batchNo===b.batchNo?'selected':''}>${lucyEsc(x.batchNo)} · ${lucyEsc(x.partName||x.part)} · ${lucyEsc(x.status)}</option>`).join('');
+  const controls=`<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
+      <input id="ljobSearch" placeholder="Type a Batch No (e.g. L-240626-04) and press Enter"
+        value="${lucyEsc(lucyJobBatch)}" onkeydown="if(event.key==='Enter')lucyJobSearch(this.value)"
+        style="flex:1;min-width:240px;padding:9px 12px;border:1px solid var(--line2);border-radius:9px;font-family:var(--mono);font-size:13px">
+      <button onclick="lucyJobSearch(document.getElementById('ljobSearch').value)"
+        style="padding:9px 16px;border:none;border-radius:9px;background:var(--steel);color:#fff;font-weight:600">Find</button>
+      <select onchange="lucyJobSearch(this.value)" style="padding:9px 10px;border:1px solid var(--line2);border-radius:9px;max-width:280px">${opts}</select>
+    </div>`;
+  if(!b) return `<h3 class="sect">Digital job card</h3>${controls}<p style="color:var(--muted)">No batch matches. Start one in NEW BATCH ▸ Start New Batch.</p>`;
+
+  const statusPill = b.status==='LEAK'?`<span class="pill over">⚠ ${lucyFmt(b.wipLeak)} unaccounted</span>`
+                   : b.status==='READY'?`<span class="pill done">✓ Ready to dispatch</span>`
+                   : b.status==='CLOSED'?`<span class="pill" style="background:#e6e9ee;color:#5b6b80">● Closed</span>`
+                   : `<span class="pill track">${lucyEsc(b.status)}</span>`;
+  const created = (b.createdAt||b.createdBy)
+    ? `Started ${lucyEsc(b.createdAt||b.startDate)}${b.createdBy?(' by '+lucyEsc(b.createdBy)):''}`
+    : (b.startDate?('Start date '+lucyEsc(b.startDate)):'');
+
+  const rowsT=b.stages.map(s=>{
+    const st = s.current?'cur':(s.good>0?'done':'pend');
+    const badge = s.current?'<span class="pill track" style="font-size:10px;padding:1px 7px">● HERE NOW</span>'
+                : s.good>0?'<span style="color:var(--green);font-weight:700">✓ done</span>'
+                : '<span style="color:var(--dim)">pending</span>';
+    return `<tr style="${s.current?'background:var(--steel-dim)':''}">
+     <td class="num">${s.step}</td><td><b>${lucyEsc(s.op)}</b> ${badge}</td>
+     <td>${lucyEsc(s.loc)}</td><td>${lucyEsc(s.zone)}</td><td>${lucyEsc(s.mc||'—')}</td>
+     <td class="num ${s.good>0?'':'dim'}">${s.good>0?lucyFmt(s.good):'·'}</td>
+     <td class="num ${s.rejected>0?'leak':''}">${s.rejected>0?lucyFmt(s.rejected):'—'}</td></tr>`;
+  }).join('');
+  const strip=b.stages.map(s=>`<div class="jstep ${s.current?'cur':(s.good>0?'done':'pend')}" style="min-width:120px">
+     <span class="op">${s.step}. ${lucyEsc(s.op)}</span><span class="meta">${lucyEsc(s.zone)}</span></div>`).join('<span class="jarrow">→</span>');
+
+  return `<h3 class="sect">Digital job card</h3>${controls}
     <div class="panel">
-      <div style="font-size:15px;font-weight:800;margin-bottom:2px">${lucyEsc(R.code)} · ${lucyEsc(R.name)}</div>
-      <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Raw material: ${lucyEsc(R.rm)} · ${R.steps.length} operations</div>
-      <div class="journey">RM <span class="jarrow">→</span>${strip}<span class="jarrow">→</span><div class="jstep cur" style="min-width:90px"><span class="op">FG</span><span class="meta">Dispatch</span></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:16px;font-weight:800">${lucyEsc(b.batchNo)} · ${lucyEsc(b.partName||b.part)} <span style="font-weight:500;color:var(--muted)">(${lucyEsc(b.part)})</span></div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:3px">RM: ${lucyEsc(b.rm)} · Batch qty: ${lucyFmt(b.qty)} · ${created}</div>
+        </div>
+        <div style="text-align:right">${statusPill}
+          <div style="font-size:12.5px;color:var(--muted);margin-top:6px">Now at <b style="color:var(--ink)">${lucyEsc(b.currentOp)}</b> (${lucyEsc(b.zone)})<br>Owner: <b style="color:var(--ink)">${lucyEsc(b.owner||'—')}</b></div>
+          <div style="font-size:12.5px;color:var(--muted)">Next: <b style="color:var(--ink)">${lucyEsc(b.nextStation)}</b></div>
+        </div>
+      </div>
+      <div class="journey" style="margin-top:12px">RM <span class="jarrow">→</span>${strip}<span class="jarrow">→</span><div class="jstep ${b.status==='READY'?'done':'pend'}" style="min-width:80px"><span class="op">FG</span></div></div>
     </div>
     <div class="tbl-wrap" style="margin-top:14px"><table><thead><tr>
-      <th class="num">Step</th><th>Operation</th><th>Cell / Location</th><th>Owner</th><th>Machine</th>
-    </tr></thead><tbody>${tbl}</tbody></table></div>
-    <p style="color:var(--muted);font-size:12px;margin-top:10px">This is the controlled routing for this part — the sequence, the responsible cell, and the machine at each step.</p>`;
+      <th class="num">Step</th><th>Operation</th><th>Owner / Location</th><th>Zone</th><th>Machine</th><th class="num">Good logged</th><th class="num">Rejected</th>
+    </tr></thead><tbody>${rowsT}</tbody></table></div>
+    <p style="color:var(--muted);font-size:12px;margin-top:10px">This is the live status — no printing. From the conference room, type any Batch No above to question the floor on exactly where it is and who has it.</p>`;
+}
+
+/* ---------- DAILY ---------- */
+function lucyRenderDaily(){
+  const D=LUCY_DATA.daily||{}; const days=Object.keys(D.dayTot||{}).sort().reverse();
+  if(!lucyDailyDate) lucyDailyDate=days[0]||'';
+  const sel=`<div style="margin-bottom:16px"><label style="font-size:12px;font-weight:600;color:var(--muted);margin-right:8px">Date</label>
+    <select onchange="lucyDailyDate=this.value;document.getElementById('lpage-daily').innerHTML=lucyRenderDaily()">
+    ${days.map(d=>`<option value="${d}" ${d===lucyDailyDate?'selected':''}>${d}</option>`).join('')||'<option>no data</option>'}
+    </select></div>`;
+  const tot=(D.dayTot||{})[lucyDailyDate]||{good:0,rej:0,rew:0,ops:0};
+  const sh=(D.shift||{})[lucyDailyDate]||{h12:0,h15:0,h18:0};
+  const zones=(D.byDayZone||{})[lucyDailyDate]||{};
+  const kpis=`<div class="kpis">
+    <div class="kpi"><div class="l">Good produced</div><div class="v">${lucyFmt(tot.good)}</div></div>
+    <div class="kpi ${tot.rej>0?'bad':''}"><div class="l">Rejected</div><div class="v">${lucyFmt(tot.rej)}</div></div>
+    <div class="kpi"><div class="l">Rework</div><div class="v">${lucyFmt(tot.rew)}</div></div>
+    <div class="kpi"><div class="l">Operations logged</div><div class="v">${lucyFmt(tot.ops)}</div></div>
+  </div>`;
+  const shift=`<h3 class="sect">Shift throughput (cumulative good pcs)</h3>
+    <div class="kpis"><div class="kpi"><div class="l">By 12:00</div><div class="v">${lucyFmt(sh.h12)}</div></div>
+    <div class="kpi"><div class="l">By 15:00</div><div class="v">${lucyFmt(sh.h15)}</div></div>
+    <div class="kpi"><div class="l">By 18:00</div><div class="v">${lucyFmt(sh.h18)}</div></div></div>`;
+  const sl=(LUCY_DATA.stationLoad||[]);
+  const zrows=sl.map(z=>`<tr><td>${lucyEsc(z.zone)}</td><td>${lucyEsc(z.loc)}</td><td class="num">${lucyFmt(zones[z.zone]||0)}</td></tr>`).join('');
+  const ztable=`<h3 class="sect">Good pieces by zone (on ${lucyEsc(lucyDailyDate)})</h3>
+    <div class="tbl-wrap"><table><thead><tr><th>Zone</th><th>Station / Owner</th><th class="num">Good pcs</th></tr></thead>
+    <tbody>${zrows}</tbody></table></div>`;
+  return sel+kpis+shift+ztable;
 }
 
 /* ---------- DISPATCH ---------- */
 function lucyRenderDispatch(){
-  const d=LUCY_DATA.dispatch||[];
-  const sched=d.filter(x=>x.schedule!=null);
-  const totSch=sched.reduce((s,x)=>s+(+x.schedule||0),0);
-  const totDisp=sched.reduce((s,x)=>s+(+x.dispatched||0),0);
-  const behind=d.filter(x=>x.status==='Behind').length;
+  const S=LUCY_DATA.schedule||[];
+  const totCust=S.reduce((s,x)=>s+(+x.custQty||0),0);
+  const totFg=S.reduce((s,x)=>s+(+x.fgReady||0),0);
+  const gaps=S.filter(x=>x.gap>0).length;
   const kpis=`<div class="kpis">
-    <div class="kpi"><div class="l">Scheduled (pcs)</div><div class="v">${lucyFmt(totSch)}</div></div>
-    <div class="kpi"><div class="l">Dispatched (pcs)</div><div class="v">${lucyFmt(totDisp)}</div></div>
-    <div class="kpi"><div class="l">Balance (pcs)</div><div class="v">${lucyFmt(totSch-totDisp)}</div></div>
-    <div class="kpi ${behind?'bad':''}"><div class="l">Parts behind</div><div class="v">${behind}</div></div>
+    <div class="kpi"><div class="l">Customer scheduled</div><div class="v">${lucyFmt(totCust)}</div></div>
+    <div class="kpi"><div class="l">FG ready</div><div class="v">${lucyFmt(totFg)}</div></div>
+    <div class="kpi ${(totCust-totFg)>0?'bad':''}"><div class="l">Gap to schedule</div><div class="v">${lucyFmt(Math.max(0,totCust-totFg))}</div></div>
+    <div class="kpi ${gaps?'bad':''}"><div class="l">Parts short</div><div class="v">${gaps}</div></div>
   </div>`;
-  const rows=d.map(x=>{
-    const cls=x.status==='DONE'?'done':x.status==='Behind'?'over':x.status==='On Track'?'track':'nosch';
-    return `<tr><td><b>${lucyEsc(x.code)}</b></td><td>${lucyEsc(x.name)}</td>
-      <td class="num">${x.schedule!=null?lucyFmt(x.schedule):'—'}</td>
-      <td class="num">${lucyFmt(x.dispatched)}</td>
-      <td class="num">${x.balance!=null?lucyFmt(x.balance):'—'}</td>
-      <td class="num">${lucyPct(x.pct)}</td>
-      <td><span class="pill ${cls}">${lucyEsc(x.status)}</span></td>
-      <td style="font-size:11.5px;color:var(--muted)">${lucyEsc(x.remark)}</td></tr>`;
-  }).join('');
-  return kpis+`<h3 class="sect">Schedule vs dispatch</h3>
-   <div class="tbl-wrap"><table><thead><tr>
-     <th>Code</th><th>Part</th><th class="num">Schedule</th><th class="num">Dispatched</th><th class="num">Balance</th><th class="num">%</th><th>Status</th><th>Remark / Plan</th>
-   </tr></thead><tbody>${rows||'<tr><td colspan=8>No dispatch rows.</td></tr>'}</tbody></table></div>
-   <p style="color:var(--muted);font-size:12px;margin-top:10px">Edit Schedule &amp; Dispatched in the DISPATCH sheet (or via AppSheet) — this view recomputes balance, % and status.</p>`;
+  const rows=S.map(x=>`<tr><td><b>${lucyEsc(x.code)}</b></td><td>${lucyEsc(x.name)}</td>
+    <td class="num">${x.custQty!=null?lucyFmt(x.custQty):'—'}</td>
+    <td>${lucyEsc(x.due||'—')}</td>
+    <td class="num">${lucyFmt(x.fgReady)}</td>
+    <td class="num ${x.gap>0?'leak':''}">${x.gap!=null?lucyFmt(x.gap):'—'}</td>
+    <td style="font-size:11.5px;color:var(--muted)">${lucyEsc(x.note)}</td></tr>`).join('');
+  return kpis+`<h3 class="sect">Customer schedule vs FG ready</h3>
+    <div class="tbl-wrap"><table><thead><tr>
+     <th>Code</th><th>Part</th><th class="num">Cust Sched</th><th>Due</th><th class="num">FG Ready</th><th class="num">Gap</th><th>Revision Note</th>
+    </tr></thead><tbody>${rows||'<tr><td colspan=7>No schedule rows.</td></tr>'}</tbody></table></div>
+    <p style="color:var(--muted);font-size:12px;margin-top:10px">FG Ready = good pieces logged at each part's final operation. Edit schedule in the SCHEDULE sheet; this recomputes the gap.</p>`;
 }
 
 </script>
