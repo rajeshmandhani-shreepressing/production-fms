@@ -6,7 +6,8 @@
 <title>Shree Pressing — Production Portal FMS</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f4f6f9; --surface:#ffffff; --surface2:#f8fafc; --line:#e3e8ef; --line2:#d4dbe5;
@@ -17,12 +18,15 @@
   --amber:#d98a00; --amber-dim:#fcf1dd;
   --red:#d4392f; --red-dim:#fbe6e4;
   --teal:#0d8a8a; --violet:#6b4fb0;
-  --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'Manrope','Segoe UI',system-ui,sans-serif;
+  --mono:'Inter','Segoe UI',system-ui,sans-serif; --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  --display:'Plus Jakarta Sans','Inter',system-ui,sans-serif;
+  --num:'Inter','Segoe UI',system-ui,sans-serif;
   --shadow:0 1px 2px rgba(16,40,70,.04),0 4px 16px rgba(16,40,70,.06);
   --shadow-lg:0 12px 40px rgba(16,40,70,.12);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-feature-settings:'ss01','cv01','tnum';letter-spacing:-.01em}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-feature-settings:'cv01','cv03','cv04','tnum','ss01';letter-spacing:-.011em}
+.num,td.num,th.num,.kpi .v,.qty,.slot-card .qty{font-family:var(--num);font-feature-settings:'tnum','cv01';font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 button{font-family:inherit;cursor:pointer}
 ::-webkit-scrollbar{height:9px;width:9px}::-webkit-scrollbar-thumb{background:#cad4e0;border-radius:5px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -85,102 +89,167 @@ button{font-family:inherit;cursor:pointer}
   border-radius:9px;padding:9px 20px;font-weight:600;font-size:13px}
 .portal-foot button:hover{background:rgba(255,255,255,.2)}
 
-/* ---------- LUCY dashboard (scoped under #lucyApp) ---------- */
+/* ================= LUCY dashboard — Shree Pressing FMS (rebuilt) ================= */
 #lucyApp{display:none;min-height:100vh}
-#lucyApp .l-side{width:230px;background:var(--navy);color:#cdd9e6;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:30}
-#lucyApp .l-side .head{padding:20px 18px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
-#lucyApp .l-side .head .mark{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#2f6fb0,#1f5a96);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;margin-bottom:11px}
-#lucyApp .l-side .head b{color:#fff;font-size:14.5px;font-weight:700;display:block}
-#lucyApp .l-side .head span{font-size:11px;color:#7c91aa}
-#lucyApp .l-side nav{flex:1;padding:12px 10px;overflow-y:auto}
-#lucyApp .l-side nav .grp{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#5f748f;padding:14px 10px 6px;font-weight:700}
-#lucyApp .l-side nav button{width:100%;display:flex;align-items:center;gap:11px;background:none;border:none;color:#b6c4d4;padding:10px 12px;border-radius:8px;font-size:13.5px;font-weight:500;text-align:left;margin-bottom:2px;transition:.13s}
+
+/* ----- sidebar ----- */
+#lucyApp .l-side{width:248px;background:linear-gradient(185deg,#16263d 0%,#152741 100%);color:#cdd9e6;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:30;border-right:1px solid rgba(255,255,255,.06)}
+#lucyApp .l-side .head{padding:22px 20px 20px;border-bottom:1px solid rgba(255,255,255,.07)}
+#lucyApp .l-side .head .mark{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#3b86d6,#1f5a96);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;margin-bottom:13px;box-shadow:0 6px 16px rgba(47,111,176,.35);font-family:var(--display)}
+#lucyApp .l-side .head b{color:#fff;font-size:15.5px;font-weight:800;display:block;font-family:var(--display);letter-spacing:-.2px}
+#lucyApp .l-side .head span{font-size:11.5px;color:#8298b3;font-weight:500}
+#lucyApp .l-side nav{flex:1;padding:14px 12px;overflow-y:auto}
+#lucyApp .l-side nav .grp{font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:#5f748f;padding:16px 12px 7px;font-weight:800}
+#lucyApp .l-side nav button{width:100%;display:flex;align-items:center;gap:12px;background:none;border:none;color:#aebccd;padding:11px 13px;border-radius:9px;font-size:14px;font-weight:600;text-align:left;margin-bottom:3px;transition:.14s;letter-spacing:-.01em}
 #lucyApp .l-side nav button:hover{background:rgba(255,255,255,.06);color:#fff}
-#lucyApp .l-side nav button.active{background:var(--steel);color:#fff;font-weight:600;box-shadow:0 4px 12px rgba(47,111,176,.4)}
-#lucyApp .l-side nav button .ic{width:18px;text-align:center;font-size:15px;opacity:.9}
-#lucyApp .l-side .foot{padding:14px 16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:#7c91aa}
-#lucyApp .l-side .foot button{margin-top:8px;width:100%;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:8px;font-weight:600;font-size:12px}
+#lucyApp .l-side nav button.active{background:linear-gradient(100deg,#2f6fb0,#3a82cc);color:#fff;font-weight:700;box-shadow:0 6px 18px rgba(47,111,176,.45)}
+#lucyApp .l-side nav button .ic{width:20px;text-align:center;font-size:16px;opacity:.92}
+#lucyApp .l-side .foot{padding:15px 16px;border-top:1px solid rgba(255,255,255,.07);font-size:11px;color:#7c91aa}
+#lucyApp .l-side .foot button{margin-top:9px;width:100%;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:9px;padding:9px;font-weight:600;font-size:12.5px;transition:.14s}
 #lucyApp .l-side .foot button:hover{background:rgba(255,255,255,.18)}
-#lucyApp .l-content{flex:1;margin-left:230px;min-width:0}
-#lucyApp .l-top{position:sticky;top:0;z-index:20;background:rgba(244,246,249,.88);backdrop-filter:blur(10px);display:flex;align-items:center;gap:14px;padding:16px 28px;border-bottom:1px solid var(--line)}
-#lucyApp .l-top h1{font-size:18px;font-weight:800}
-#lucyApp .l-top .crumb{font-size:12px;color:var(--muted)}
+
+/* ----- top bar ----- */
+#lucyApp .l-content{flex:1;margin-left:248px;min-width:0}
+#lucyApp .l-top{position:sticky;top:0;z-index:20;background:rgba(244,246,249,.9);backdrop-filter:saturate(160%) blur(12px);display:flex;align-items:center;gap:16px;padding:18px 32px;border-bottom:1px solid var(--line)}
+#lucyApp .l-top h1{font-size:21px;font-weight:800;font-family:var(--display);letter-spacing:-.4px}
+#lucyApp .l-top .crumb{font-size:12.5px;color:var(--muted);margin-top:2px}
 #lucyApp .l-top .spacer{flex:1}
-#lucyApp .l-top button.refresh{background:var(--steel);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-weight:600;font-size:13px}
-#lucyApp .livebadge{display:inline-flex;align-items:center;gap:7px;background:rgba(31,157,87,.12);color:#157a43;border:1px solid rgba(31,157,87,.3);border-radius:20px;padding:6px 13px;font-size:11.5px;font-weight:700;font-family:var(--mono);letter-spacing:.5px}
+#lucyApp .l-top button.refresh{background:var(--navy);color:#fff;border:none;border-radius:9px;padding:10px 16px;font-weight:700;font-size:13px;transition:.14s;letter-spacing:-.01em}
+#lucyApp .l-top button.refresh:hover{background:var(--navy2)}
+#lucyApp .livebadge{display:inline-flex;align-items:center;gap:8px;background:rgba(31,157,87,.1);color:#157a43;border:1px solid rgba(31,157,87,.28);border-radius:22px;padding:7px 14px;font-size:11.5px;font-weight:800;letter-spacing:.4px}
 #lucyApp .livebadge .dot{width:8px;height:8px;border-radius:50%;background:#1f9d57;animation:lpulse 1.6s ease-in-out infinite}
 @keyframes lpulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(31,157,87,.5)}50%{opacity:.6;box-shadow:0 0 0 5px rgba(31,157,87,0)}}
-#lucyApp .l-page{animation:lfade .25s ease}
-@keyframes lfade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-#lucyApp .repgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-top:16px}
-#lucyApp .repcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
-#lucyApp .repcard h4{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin:0 0 14px;font-weight:700}
-#lucyApp .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:12.5px}
-#lucyApp .bar-row .lbl{width:120px;flex-shrink:0;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#lucyApp .bar-row .track{flex:1;height:18px;background:#eef2f7;border-radius:5px;overflow:hidden;position:relative}
-#lucyApp .bar-row .fill{height:100%;border-radius:5px;background:linear-gradient(90deg,#2f6fb0,#3f8fd6)}
-#lucyApp .bar-row .val{width:64px;text-align:right;font-family:var(--mono);font-weight:700;font-size:12px}
-#lucyApp .gapcell{font-family:var(--mono);font-size:11px;color:var(--muted)}
-#lucyApp .age-hot{color:var(--red);font-weight:700}
-#lucyApp .spark{display:flex;align-items:flex-end;gap:3px;height:60px;margin-top:6px}
-#lucyApp .spark .s{flex:1;background:linear-gradient(180deg,#3f8fd6,#2f6fb0);border-radius:3px 3px 0 0;min-height:2px;position:relative}
-#lucyApp .spark .s:hover::after{content:attr(data-v);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:#16263d;color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;white-space:nowrap;font-family:var(--mono)}
-#lucyApp main.l-main{padding:24px 28px 70px;max-width:1340px}
-#lucyApp h3.sect{font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:var(--dim);margin:24px 0 12px;font-weight:700}
-#lucyApp .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
-#lucyApp .kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
-#lucyApp .kpi .l{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-#lucyApp .kpi .v{font-family:var(--mono);font-size:26px;font-weight:700;margin-top:6px}
+#lucyApp .l-page{animation:lfade .26s ease}
+@keyframes lfade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+#lucyApp main.l-main{padding:26px 32px 80px;max-width:1440px}
+#lucyApp .l-page{display:none}
+#lucyApp .l-page.active{display:block}
+#lucyApp h3.sect{font-size:12.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim);margin:28px 0 14px;font-weight:800;display:flex;align-items:center;gap:9px}
+#lucyApp h3.sect::before{content:"";width:3px;height:14px;background:var(--steel);border-radius:2px;display:inline-block}
+
+/* ----- KPI cards ----- */
+#lucyApp .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+#lucyApp .kpi{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+#lucyApp .kpi::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--steel);opacity:.85}
+#lucyApp .kpi.bad::after{background:var(--red)}
+#lucyApp .kpi.good::after{background:var(--green)}
+#lucyApp .kpi .l{font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+#lucyApp .kpi .v{font-size:32px;font-weight:800;margin-top:8px;letter-spacing:-.03em;line-height:1}
 #lucyApp .kpi.bad .v{color:var(--red)}
 #lucyApp .kpi.good .v{color:var(--green)}
-#lucyApp .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);margin-top:14px}
-#lucyApp .slot-card .lab{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-#lucyApp .slot-card .qty{font-family:var(--mono);font-size:26px;font-weight:700;margin-top:5px;color:var(--ink);letter-spacing:-.5px}
-#lucyApp .slot-card .sub{font-size:11px;color:var(--green);font-weight:600;margin-top:3px;font-family:var(--mono)}
-@media print{
-  #lucyApp .l-side,#lucyApp .l-top .refresh,#lucyApp .toolbar{display:none!important}
-  #lucyApp .l-main{margin-left:0!important}
-  #lucyApp .pcard,#lucyApp .panel,#lucyApp .tbl-wrap{break-inside:avoid}
-}
-#lucyApp .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:13px;background:var(--surface);box-shadow:var(--shadow)}
-#lucyApp table{width:100%;border-collapse:collapse;font-size:13px}
-#lucyApp th,#lucyApp td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
-#lucyApp th{background:var(--surface2);font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
-#lucyApp td.num,#lucyApp th.num{text-align:right;font-family:var(--mono)}
+#lucyApp .kpi .vsub{font-size:11.5px;color:var(--dim);font-weight:600;margin-top:5px}
+
+#lucyApp .panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);margin-top:16px}
+
+/* ----- shift slot cards ----- */
+#lucyApp .slots-strip{display:grid;gap:14px;margin-bottom:6px}
+#lucyApp .slot-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow)}
+#lucyApp .slot-card .lab{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+#lucyApp .slot-card .qty{font-size:30px;font-weight:800;margin-top:6px;color:var(--ink);letter-spacing:-.03em;line-height:1}
+#lucyApp .slot-card .sub{font-size:12px;color:var(--green);font-weight:700;margin-top:5px}
+
+/* ----- tables ----- */
+#lucyApp .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:var(--shadow)}
+#lucyApp table{width:100%;border-collapse:collapse;font-size:13.5px}
+#lucyApp th,#lucyApp td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--line)}
+#lucyApp th{background:var(--surface2);font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);position:sticky;top:0}
+#lucyApp tbody tr{transition:background .12s}
+#lucyApp tbody tr:hover{background:var(--surface2)}
+#lucyApp td.num,#lucyApp th.num{text-align:right;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 #lucyApp tr:last-child td{border-bottom:none}
-#lucyApp .leak{color:var(--red);font-weight:700}
-#lucyApp .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+#lucyApp td.dim{color:var(--dim)}
+#lucyApp .leak{color:var(--red);font-weight:800}
+#lucyApp .gapcell{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* ----- pills ----- */
+#lucyApp .pill{display:inline-flex;align-items:center;gap:4px;padding:3px 11px;border-radius:22px;font-size:11.5px;font-weight:800;letter-spacing:-.01em}
 #lucyApp .pill.done{background:var(--green-dim);color:var(--green)}
 #lucyApp .pill.track{background:var(--steel-dim);color:var(--steel-deep)}
 #lucyApp .pill.over{background:var(--red-dim);color:var(--red)}
 #lucyApp .pill.nosch{background:var(--surface2);color:var(--dim)}
-#lucyApp .journey{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-#lucyApp .jstep{display:flex;flex-direction:column;gap:2px;min-width:118px;border:1px solid var(--line);border-radius:11px;padding:9px 11px;background:var(--surface)}
-#lucyApp .jstep .op{font-weight:700;font-size:12.5px}
-#lucyApp .jstep .meta{font-size:11px;color:var(--muted);font-family:var(--mono)}
-#lucyApp .jstep.done{border-color:var(--green);background:var(--green-dim)}
-#lucyApp .jstep.cur{border-color:var(--steel);background:var(--steel-dim)}
-#lucyApp .jstep.pend{opacity:.6}
+
+/* ----- journey strip (job route chips) ----- */
+#lucyApp .journey{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+#lucyApp .jstep{display:flex;flex-direction:column;gap:3px;min-width:124px;border:1.5px solid var(--line);border-radius:12px;padding:10px 13px;background:var(--surface);transition:.14s}
+#lucyApp .jstep .op{font-weight:800;font-size:13px;letter-spacing:-.01em}
+#lucyApp .jstep .meta{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+#lucyApp .jstep.done{border-color:rgba(31,157,87,.45);background:var(--green-dim)}
+#lucyApp .jstep.cur{border-color:var(--steel);background:var(--steel-dim);box-shadow:0 4px 14px rgba(47,111,176,.2)}
+#lucyApp .jstep.pend{opacity:.55}
 #lucyApp .jstep.leakstep{border-color:var(--red);background:var(--red-dim)}
-#lucyApp .jarrow{color:var(--dim);font-weight:700}
-#lucyApp select,#lucyApp input{background:var(--surface);border:1px solid var(--line2);border-radius:8px;padding:8px 11px;font-size:13px;font-family:inherit}
-#lucyApp .loading{padding:40px;text-align:center;color:var(--muted)}
-#lucyApp .l-page{display:none}
-#lucyApp .l-page.active{display:block}
-#lucyApp td.dim{color:var(--dim)}
-#lucyApp .lviewbtn{background:var(--surface);border:1px solid var(--line2);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--muted)}
-#lucyApp .lviewbtn.on{background:var(--steel);color:#fff;border-color:var(--steel)}
-#lucyApp .pcards{display:grid;grid-template-columns:1fr;gap:14px;margin-top:12px}
-#lucyApp .pcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
-#lucyApp .pcard-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;gap:12px;flex-wrap:wrap}
-#lucyApp .pcard-head b{font-size:15px}
-#lucyApp .pcard-name{color:var(--muted);font-size:13px;margin-left:6px}
-#lucyApp .pcard-now{font-size:12px;color:var(--muted)}
-#lucyApp .pcard .journey{margin-top:10px}
-#lucyApp .pill.over{display:inline-block;margin-bottom:6px}
-#lucyApp .lbanner{background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;margin:14px 0 4px}
-#lucyApp .lnext{font-size:12.5px;color:var(--muted)}
-#lucyApp .lnext b{color:var(--steel-deep)}
+#lucyApp .jarrow{color:var(--line2);font-weight:800;font-size:15px}
+
+/* ----- live board production cards ----- */
+#lucyApp .pcards{display:grid;grid-template-columns:1fr;gap:16px;margin-top:14px}
+#lucyApp .pcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);transition:.16s;border-left:4px solid var(--line2)}
+#lucyApp .pcard:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+#lucyApp .pcard.s-leak{border-left-color:var(--red)}
+#lucyApp .pcard.s-ready{border-left-color:var(--green)}
+#lucyApp .pcard.s-moving{border-left-color:var(--steel)}
+#lucyApp .pcard-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:14px;flex-wrap:wrap}
+#lucyApp .pcard-batch{font-size:17px;font-weight:800;font-family:var(--display);letter-spacing:-.3px}
+#lucyApp .pcard-name{color:var(--muted);font-size:13.5px;margin-top:3px}
+#lucyApp .pcard-name b{color:var(--ink);font-weight:700}
+#lucyApp .pcard-now{font-size:13px;color:var(--muted);text-align:right}
+#lucyApp .pcard-now b{color:var(--ink);font-weight:800}
+#lucyApp .pcard-meta{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
+#lucyApp .lnext{font-size:13px;color:var(--muted)}
+#lucyApp .lnext b{color:var(--steel-deep);font-weight:800}
+#lucyApp .pcard .journey{margin-top:4px}
+
+/* ----- banners ----- */
+#lucyApp .lbanner{background:linear-gradient(100deg,var(--amber-dim),#fff7e8);color:#92590a;border:1px solid rgba(217,138,0,.4);border-radius:12px;padding:13px 18px;font-size:13.5px;font-weight:700;margin:16px 0 4px;display:flex;align-items:center;gap:10px}
+#lucyApp .lbanner b{color:#7a4a00}
+#lucyApp .lbanner.alert{background:linear-gradient(100deg,var(--red-dim),#fdeeed);color:#9b241c;border-color:rgba(212,57,47,.4)}
+
+/* ----- toolbar / controls ----- */
+#lucyApp .toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+#lucyApp select,#lucyApp input{background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:10px 13px;font-size:13.5px;font-family:inherit;color:var(--ink);transition:.14s}
+#lucyApp select:focus,#lucyApp input:focus{outline:none;border-color:var(--steel);box-shadow:0 0 0 3px var(--steel-dim)}
+#lucyApp .btn-primary{background:var(--steel);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-weight:700;font-size:13.5px;transition:.14s}
+#lucyApp .btn-primary:hover{background:var(--steel-deep)}
+#lucyApp .btn-ghost{background:var(--surface);border:1px solid var(--line2);border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;color:var(--muted);transition:.14s}
+#lucyApp .btn-ghost:hover{border-color:var(--steel);color:var(--steel-deep)}
+#lucyApp .loading{padding:60px;text-align:center;color:var(--muted);font-size:14px}
+
+/* ----- report bars ----- */
+#lucyApp .bar-row{display:flex;align-items:center;gap:12px;margin-bottom:11px;font-size:13px}
+#lucyApp .bar-row .lbl{width:140px;flex-shrink:0;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#lucyApp .bar-row .track{flex:1;height:20px;background:#eef2f7;border-radius:6px;overflow:hidden}
+#lucyApp .bar-row .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#2f6fb0,#4d97da)}
+#lucyApp .bar-row .val{width:70px;text-align:right;font-weight:800;font-size:12.5px;font-variant-numeric:tabular-nums}
+#lucyApp .empty{padding:30px;text-align:center;color:var(--muted);font-size:13.5px}
+
+/* ----- digital job card (print-ready) ----- */
+#lucyApp .jc-sheet{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;margin-top:4px}
+#lucyApp .jc-band{background:linear-gradient(100deg,#16263d,#23456e);color:#fff;padding:20px 24px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+#lucyApp .jc-band .co{font-family:var(--display);font-size:18px;font-weight:800;letter-spacing:.3px}
+#lucyApp .jc-band .co span{display:block;font-size:11.5px;font-weight:600;color:#9fbbd9;letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+#lucyApp .jc-band .jc-batch{text-align:right}
+#lucyApp .jc-band .jc-batch .bn{font-size:22px;font-weight:800;font-family:var(--display);letter-spacing:-.3px}
+#lucyApp .jc-band .jc-batch .bs{font-size:12px;color:#9fbbd9;margin-top:2px}
+#lucyApp .jc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--line);border-bottom:1px solid var(--line)}
+#lucyApp .jc-cell{background:var(--surface);padding:13px 18px}
+#lucyApp .jc-cell .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);font-weight:700}
+#lucyApp .jc-cell .v{font-size:14.5px;font-weight:700;margin-top:4px;color:var(--ink)}
+#lucyApp .jc-cell .v.hot{color:var(--red)}
+#lucyApp .jc-body{padding:20px 24px}
+
+/* ----- print: clean A4 job card / report ----- */
+@media print{
+  body{background:#fff!important}
+  #login,#portal,#app{display:none!important}
+  #lucyApp .l-side,#lucyApp .l-top,#lucyApp .toolbar,#lucyApp .no-print{display:none!important}
+  #lucyApp .l-content{margin-left:0!important}
+  #lucyApp main.l-main{padding:0!important;max-width:none!important}
+  #lucyApp .l-page{display:none!important}
+  #lucyApp .l-page.active{display:block!important;animation:none!important}
+  #lucyApp .pcard,#lucyApp .panel,#lucyApp .tbl-wrap,#lucyApp .jc-sheet,#lucyApp .kpi{break-inside:avoid;box-shadow:none!important}
+  #lucyApp .jc-sheet,#lucyApp .tbl-wrap,#lucyApp .panel{border:1px solid #bbb!important}
+  #lucyApp .jc-band{background:#16263d!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #lucyApp .kpi::after,#lucyApp .pill,#lucyApp .jstep.done,#lucyApp .jstep.cur{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4;margin:14mm}
+}
 
 /* ---------- SHELL: sidebar + main ---------- */
 #app{display:none;min-height:100vh}
@@ -467,7 +536,7 @@ td.num,th.num{font-family:var(--mono);text-align:right}
     <header class="l-top">
       <div><h1 id="lucyTitle">All Open Batches</h1><div class="crumb" id="lucyCrumb">Live WIP monitor</div></div>
       <div class="spacer"></div>
-      <span class="livebadge"><span class="dot"></span>LIVE · 10s</span>
+      <span class="livebadge"><span class="dot"></span>LIVE · 15s</span>
       <button class="refresh" onclick="lucyLoad(true)">↻ Refresh</button>
     </header>
     <main class="l-main">
@@ -2082,9 +2151,10 @@ function repPVD(){
    { routes, board, stationLoad, bottleneck, daily, schedule }
    Paste your deployed LUCY Apps Script /exec URL below.
    ==================================================================== */
-const LUCY_API_URL = "https://script.google.com/macros/s/AKfycbw75cWfscKO4mwmhzGZt_c1NELqKj1MyjwIEyK9rnbZX007en9hm4af07TKqnHR4RBRuw/exec";
+const LUCY_API_URL = "https://script.google.com/macros/s/AKfycbzwIRyjkq5Jflsd7yf2vNK43gZAnPJU5PT9JCMYisPtpc4nCKrC7CHc5F_JPqIi_FWciA/exec";
 
 let LUCY_DATA=null, lucyTimer=null, lucyActiveTab='board', lucyJobBatch='', lucyDailyDate='';
+let lucyRangeFrom='', lucyRangeTo='', lucyRangeData=null, lucyRangeLoading=false;
 function lucyTeardown(){ if(lucyTimer){clearInterval(lucyTimer);lucyTimer=null;} document.getElementById('lucyApp').style.display='none'; }
 function bootLucy(){
   document.getElementById('portal').style.display='none';
@@ -2093,7 +2163,7 @@ function bootLucy(){
   document.querySelectorAll('#lucyApp .l-side nav button').forEach(b=>b.classList.toggle('active',b.dataset.ltab==='board'));
   lucyLoad();
   if(lucyTimer)clearInterval(lucyTimer);
-  lucyTimer=setInterval(()=>lucyLoad(true),10000);
+  lucyTimer=setInterval(()=>lucyLoad(true),15000);
 }
 function lucyTab(btn){
   document.querySelectorAll('#lucyApp .l-side nav button').forEach(b=>b.classList.remove('active'));
@@ -2117,8 +2187,15 @@ function lucyLoad(silent){
     LUCY_DATA=d; document.getElementById('lucyLoading').style.display='none';
     document.getElementById('lucyMeta').textContent='Updated '+(d.generated||'');
     if(!lucyDailyDate){ const days=Object.keys((d.daily||{}).dayTot||{}); lucyDailyDate=days.sort().pop()||''; }
+    // On silent auto-refresh, don't yank the page out from under someone typing
+    if(silent){
+      const ae=document.activeElement;
+      const typing = ae && ae.closest && ae.closest('#lucyApp') && (ae.tagName==='INPUT'||ae.tagName==='SELECT');
+      if(typing) return;                     // skip this cycle, data is stored for next render
+      if(lucyActiveTab==='reports') return;  // reports stays put unless user acts
+    }
     lucyRender();
-  }).catch(()=>{ document.getElementById('lucyLoading').innerHTML='Cannot reach LUCY server. Check LUCY_API_URL / deployment.'; });
+  }).catch(()=>{ if(!silent) document.getElementById('lucyLoading').innerHTML='Cannot reach LUCY server. Check LUCY_API_URL / deployment.'; });
 }
 function lucyEsc(s){return (s==null?'':String(s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 function lucyFmt(n){n=Number(n||0);return n.toLocaleString('en-IN');}
@@ -2136,267 +2213,343 @@ function lucyRender(){
 }
 
 /* ---------- LIVE BOARD ---------- */
+/* ====================== LIVE BOARD ====================== */
 function lucyRenderBoard(){
   const B=LUCY_DATA.board||[];
-  const open=B.filter(x=>x.status!=='READY');
-  const leaks=B.filter(x=>x.status==='LEAK');
-  const ready=B.filter(x=>x.status==='READY');
+  const open  = B.filter(x=>x.status!=='READY'&&x.status!=='CLOSED');
+  const leaks = B.filter(x=>x.status==='LEAK');
+  const ready = B.filter(x=>x.status==='READY');
   const totLeak=B.reduce((s,x)=>s+(+x.wipLeak||0),0);
+
   const kpis=`<div class="kpis">
-    <div class="kpi"><div class="l">Open batches</div><div class="v">${open.length}</div></div>
-    <div class="kpi ${leaks.length?'bad':'good'}"><div class="l">Batches leaking</div><div class="v">${leaks.length}</div></div>
-    <div class="kpi ${ready.length?'good':''}"><div class="l">Ready to dispatch</div><div class="v">${ready.length}</div></div>
-    <div class="kpi ${totLeak>0?'bad':''}"><div class="l">Total unaccounted (pcs)</div><div class="v">${lucyFmt(totLeak)}</div></div>
+    <div class="kpi"><div class="l">Open batches</div><div class="v num">${open.length}</div><div class="vsub">live on the floor</div></div>
+    <div class="kpi ${leaks.length?'bad':'good'}"><div class="l">Batches leaking</div><div class="v num">${leaks.length}</div><div class="vsub">${leaks.length?'pieces unaccounted':'all reconciled'}</div></div>
+    <div class="kpi ${ready.length?'good':''}"><div class="l">Ready to dispatch</div><div class="v num">${ready.length}</div><div class="vsub">finished goods</div></div>
+    <div class="kpi ${totLeak>0?'bad':''}"><div class="l">Total unaccounted</div><div class="v num">${lucyFmt(totLeak)}</div><div class="vsub">pieces across batches</div></div>
   </div>`;
-  // bottleneck banner
+
   const bn=LUCY_DATA.bottleneck;
-  const bnBanner = bn ? `<div class="lbanner">Bottleneck right now: <b>${lucyEsc(bn.loc)}</b> (${bn.open} batch${bn.open>1?'es':''} waiting)</div>` : '';
-  // sort: leaks first, then moving, then ready
-  const rank={'LEAK':0,'Moving':1,'Not started':2,'READY':3};
+  const bnBanner = bn ? `<div class="lbanner">⚠ Bottleneck right now — <b>${lucyEsc(bn.loc)}</b> has ${bn.open} batch${bn.open>1?'es':''} waiting. Clear this station first.</div>` : '';
+
+  if(!B.length) return kpis+`<div class="empty" style="margin-top:18px">No open batches yet. Start one in the sheet (NEW BATCH ▸ Start New Batch) or via the supervisor app.</div>`;
+
+  const rank={'LEAK':0,'Moving':1,'Not started':2,'READY':3,'CLOSED':4};
   const order=[...B].sort((a,b)=>(rank[a.status]??9)-(rank[b.status]??9));
+
   const cards=order.map(x=>{
+    const cls = x.status==='LEAK'?'s-leak':x.status==='READY'?'s-ready':'s-moving';
     const strip=x.stages.map((s,i)=>{
       const next=x.stages[i+1];
-      let cls='pend';
-      if(s.good>0) cls='done';
-      if(s.current) cls='cur';
-      if(next && s.good>0 && next.good>0 && (s.good-next.good-next.rejected)>0) cls='leakstep';
-      const meta=s.good>0?lucyFmt(s.good)+(s.rejected?(' · rej '+lucyFmt(s.rejected)):''):'·';
-      return `<div class="jstep ${cls}"><span class="op">${lucyEsc(s.op)}</span><span class="meta">${lucyEsc(s.zone)}</span><span class="meta">${meta}</span></div>`;
+      let c='pend';
+      if(s.good>0) c='done';
+      if(s.current) c='cur';
+      if(next && s.good>0 && next.good>0 && (s.good-next.good-next.rejected)>0) c='leakstep';
+      const meta=s.good>0?(lucyFmt(s.good)+(s.rejected?(' · rej '+lucyFmt(s.rejected)):'')):'—';
+      return `<div class="jstep ${c}"><span class="op">${lucyEsc(s.op)}</span><span class="meta">${lucyEsc(s.zone)}</span><span class="meta">${meta}</span></div>`;
     }).join('<span class="jarrow">→</span>');
     const statusPill = x.status==='LEAK'?`<span class="pill over">⚠ ${lucyFmt(x.wipLeak)} unaccounted</span>`
                      : x.status==='READY'?`<span class="pill done">✓ Ready to dispatch</span>`
                      : `<span class="pill track">${lucyEsc(x.status)}</span>`;
-    return `<div class="pcard">
+    const hot = x.ageMs>2*86400000;
+    return `<div class="pcard ${cls}">
        <div class="pcard-head">
-         <div><b>${lucyEsc(x.batchNo)}</b> <span class="pcard-name">${lucyEsc(x.partName||x.part)} · <b style="color:var(--ink)">${lucyEsc(x.part)}</b> · qty <b style="color:var(--ink)">${lucyFmt(x.qty)}</b></span></div>
-         <div class="pcard-now">Now: <b>${lucyEsc(x.currentOp)}</b> (${lucyEsc(x.zone)})</div>
+         <div>
+           <div class="pcard-batch">${lucyEsc(x.batchNo)}</div>
+           <div class="pcard-name">${lucyEsc(x.partName||x.part)} · <b>${lucyEsc(x.part)}</b> · qty <b>${lucyFmt(x.qty)}</b></div>
+         </div>
+         <div class="pcard-now">Now at<br><b>${lucyEsc(x.currentOp)}</b> <span style="color:var(--muted);font-weight:600">(${lucyEsc(x.zone)})</span></div>
        </div>
-       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:2px 0 8px">
+       <div class="pcard-meta">
          ${statusPill}
          <span class="lnext">Next: <b>${lucyEsc(x.nextStation)}</b></span>
-         ${x.ageAtStation?`<span class="lnext" style="color:${x.ageMs>2*86400000?'var(--red)':'var(--muted)'}">⏱ ${x.ageMs>2*86400000?'<b>':''}${lucyEsc(x.ageAtStation)} at station${x.ageMs>2*86400000?'</b>':''}</span>`:''}
+         ${x.ageAtStation?`<span class="lnext" style="${hot?'color:var(--red);font-weight:700':''}">⏱ ${lucyEsc(x.ageAtStation)} at station</span>`:''}
        </div>
        <div class="journey">${strip}</div>
      </div>`;
   }).join('');
-  return kpis+bnBanner+`<div class="pcards">${cards||'<p style="color:var(--muted)">No batches yet. Start one in the sheet (NEW BATCH ▸ Start New Batch).</p>'}</div>`;
+  return kpis+bnBanner+`<div class="pcards">${cards}</div>`;
 }
 
-/* ---------- DIGITAL JOB CARD (searchable, no printing) ---------- */
-function lucyJobSearch(v){ lucyJobBatch=(v||'').trim(); document.getElementById('lpage-jobcard').innerHTML=lucyRenderJobcard(); 
-  const i=document.getElementById('ljobSearch'); if(i){ i.focus(); const val=i.value; i.value=''; i.value=val; } }
+/* ====================== DIGITAL JOB CARD (print-ready) ====================== */
+function lucyJobSearch(v){ lucyJobBatch=(v||'').trim(); lucyRender(); }
+function lucyPrintJobCard(){ window.print(); }
 function lucyRenderJobcard(){
   const B=LUCY_DATA.board||[];
-  // resolve current selection: exact batchNo match (case-insensitive), else first
   let b=null;
   if(lucyJobBatch){ const q=lucyJobBatch.toLowerCase();
     b=B.find(x=>x.batchNo.toLowerCase()===q) || B.find(x=>x.batchNo.toLowerCase().indexOf(q)>=0); }
   if(!b) b=B[0]||null;
-  const opts=B.map(x=>`<option value="${lucyEsc(x.batchNo)}" ${b&&x.batchNo===b.batchNo?'selected':''}>${lucyEsc(x.batchNo)} · ${lucyEsc(x.partName||x.part)} · ${lucyEsc(x.status)}</option>`).join('');
-  const controls=`<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
+  const opts=B.map(x=>`<option value="${lucyEsc(x.batchNo)}" ${b&&x.batchNo===b.batchNo?'selected':''}>${lucyEsc(x.batchNo)} · ${lucyEsc(x.partName||x.part)}</option>`).join('');
+
+  const controls=`<div class="toolbar no-print">
       <input id="ljobSearch" placeholder="Type a Batch No (e.g. L-240626-04) and press Enter"
         value="${lucyEsc(lucyJobBatch)}" onkeydown="if(event.key==='Enter')lucyJobSearch(this.value)"
-        style="flex:1;min-width:240px;padding:9px 12px;border:1px solid var(--line2);border-radius:9px;font-family:var(--mono);font-size:13px">
-      <button onclick="lucyJobSearch(document.getElementById('ljobSearch').value)"
-        style="padding:9px 16px;border:none;border-radius:9px;background:var(--steel);color:#fff;font-weight:600">Find</button>
-      <select onchange="lucyJobSearch(this.value)" style="padding:9px 10px;border:1px solid var(--line2);border-radius:9px;max-width:280px">${opts}</select>
+        style="flex:1;min-width:260px">
+      <select onchange="lucyJobSearch(this.value)" style="min-width:240px;max-width:320px">${opts||'<option>no batches</option>'}</select>
+      <button class="btn-primary" onclick="lucyJobSearch(document.getElementById('ljobSearch').value)">Find</button>
+      <button class="btn-ghost" onclick="lucyPrintJobCard()">⎙ Print job card</button>
     </div>`;
-  if(!b) return `<h3 class="sect">Digital job card</h3>${controls}<p style="color:var(--muted)">No batch matches. Start one in NEW BATCH ▸ Start New Batch.</p>`;
+
+  if(!b) return `<h3 class="sect">Digital job card</h3>${controls}<div class="empty">No batch matches. Start one first.</div>`;
 
   const statusPill = b.status==='LEAK'?`<span class="pill over">⚠ ${lucyFmt(b.wipLeak)} unaccounted</span>`
                    : b.status==='READY'?`<span class="pill done">✓ Ready to dispatch</span>`
-                   : b.status==='CLOSED'?`<span class="pill" style="background:#e6e9ee;color:#5b6b80">● Closed</span>`
+                   : b.status==='CLOSED'?`<span class="pill nosch">● Closed</span>`
                    : `<span class="pill track">${lucyEsc(b.status)}</span>`;
   const created = (b.createdAt||b.createdBy)
-    ? `Started ${lucyEsc(b.createdAt||b.startDate)}${b.createdBy?(' by '+lucyEsc(b.createdBy)):''}`
-    : (b.startDate?('Start date '+lucyEsc(b.startDate)):'');
+    ? `${lucyEsc(b.createdAt||b.startDate)}${b.createdBy?(' · '+lucyEsc(b.createdBy)):''}`
+    : (b.startDate?lucyEsc(b.startDate):'—');
+  const hot=b.ageMs>2*86400000;
 
   const rowsT=b.stages.map(s=>{
-    const st = s.current?'cur':(s.good>0?'done':'pend');
-    const badge = s.current?'<span class="pill track" style="font-size:10px;padding:1px 7px">● HERE NOW</span>'
-                : s.good>0?'<span style="color:var(--green);font-weight:700">✓ done</span>'
+    const badge = s.current?'<span class="pill track" style="font-size:10px;padding:1px 8px">● HERE NOW</span>'
+                : s.good>0?'<span style="color:var(--green);font-weight:800">✓ done</span>'
                 : '<span style="color:var(--dim)">pending</span>';
     return `<tr style="${s.current?'background:var(--steel-dim)':''}">
-     <td class="num">${s.step}</td><td><b>${lucyEsc(s.op)}</b> ${badge}</td>
+     <td class="num" style="width:48px">${s.step}</td>
+     <td><b>${lucyEsc(s.op)}</b> &nbsp;${badge}</td>
      <td>${lucyEsc(s.loc)}</td><td>${lucyEsc(s.zone)}</td>
      <td class="gapcell">${s.ts?lucyEsc(s.ts):'—'}</td>
      <td class="gapcell">${s.gap?('+'+lucyEsc(s.gap)):'—'}</td>
-     <td class="num ${s.good>0?'':'dim'}">${s.good>0?lucyFmt(s.good):'·'}</td>
+     <td class="num ${s.good>0?'':'dim'}">${s.good>0?lucyFmt(s.good):'—'}</td>
      <td class="num ${s.rejected>0?'leak':''}">${s.rejected>0?lucyFmt(s.rejected):'—'}</td></tr>`;
   }).join('');
-  const strip=b.stages.map(s=>`<div class="jstep ${s.current?'cur':(s.good>0?'done':'pend')}" style="min-width:120px">
+
+  const strip=b.stages.map(s=>`<div class="jstep ${s.current?'cur':(s.good>0?'done':'pend')}" style="min-width:118px">
      <span class="op">${s.step}. ${lucyEsc(s.op)}</span><span class="meta">${lucyEsc(s.zone)}</span></div>`).join('<span class="jarrow">→</span>');
 
-  return `<h3 class="sect">Digital job card</h3>${controls}
-    <div class="panel">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
-        <div>
-          <div style="font-size:16px;font-weight:800">${lucyEsc(b.batchNo)} · ${lucyEsc(b.partName||b.part)} <span style="font-weight:500;color:var(--muted)">(${lucyEsc(b.part)})</span></div>
-          <div style="font-size:12.5px;color:var(--muted);margin-top:3px">RM: ${lucyEsc(b.rm)} · Batch qty: ${lucyFmt(b.qty)} · ${created}</div>
-        </div>
-        <div style="text-align:right">${statusPill}
-          <div style="font-size:12.5px;color:var(--muted);margin-top:6px">Now at <b style="color:var(--ink)">${lucyEsc(b.currentOp)}</b> (${lucyEsc(b.zone)})<br>Owner: <b style="color:var(--ink)">${lucyEsc(b.owner||'—')}</b></div>
-          <div style="font-size:12.5px;color:var(--muted)">Next: <b style="color:var(--ink)">${lucyEsc(b.nextStation)}</b></div>
-          ${b.cycleTime?`<div style="font-size:12.5px;color:var(--muted)">Cycle so far: <b style="color:var(--ink)">${lucyEsc(b.cycleTime)}</b></div>`:''}
-          ${b.ageAtStation?`<div style="font-size:12.5px;color:${b.ageMs>2*86400000?'var(--red)':'var(--muted)'}">At this station: <b>${lucyEsc(b.ageAtStation)}</b></div>`:''}
-        </div>
-      </div>
-      <div class="journey" style="margin-top:12px">RM <span class="jarrow">→</span>${strip}<span class="jarrow">→</span><div class="jstep ${b.status==='READY'?'done':'pend'}" style="min-width:80px"><span class="op">FG</span></div></div>
+  const sheet=`<div class="jc-sheet">
+    <div class="jc-band">
+      <div class="co">SHREE PRESSING<span>Lucy Cell · Production Job Card</span></div>
+      <div class="jc-batch"><div class="bn">${lucyEsc(b.batchNo)}</div><div class="bs">${lucyEsc(LUCY_DATA.generated||'')}</div></div>
     </div>
-    <div class="tbl-wrap" style="margin-top:14px"><table><thead><tr>
-      <th class="num">Step</th><th>Operation</th><th>Owner / Location</th><th>Zone</th><th>Time logged</th><th>Gap from prev</th><th class="num">Total qty</th><th class="num">Rejected</th>
-    </tr></thead><tbody>${rowsT}</tbody></table></div>
-    <p style="color:var(--muted);font-size:12px;margin-top:10px">"Gap from prev" = time between this operation and the one before it — spot where a lot sat waiting. "Cycle so far" = first logged op to latest. From the conference room, type any Batch No above to question the floor.</p>`;
+    <div class="jc-grid">
+      <div class="jc-cell"><div class="k">Part</div><div class="v">${lucyEsc(b.partName||b.part)}</div></div>
+      <div class="jc-cell"><div class="k">Part code</div><div class="v">${lucyEsc(b.part)}</div></div>
+      <div class="jc-cell"><div class="k">Batch qty</div><div class="v num">${lucyFmt(b.qty)}</div></div>
+      <div class="jc-cell"><div class="k">RM grade & size</div><div class="v">${lucyEsc(b.rm||'—')}</div></div>
+      <div class="jc-cell"><div class="k">Started</div><div class="v">${created}</div></div>
+      <div class="jc-cell"><div class="k">Now at</div><div class="v">${lucyEsc(b.currentOp)} (${lucyEsc(b.zone)})</div></div>
+      <div class="jc-cell"><div class="k">Owner</div><div class="v">${lucyEsc(b.owner||'—')}</div></div>
+      <div class="jc-cell"><div class="k">Next station</div><div class="v">${lucyEsc(b.nextStation)}</div></div>
+      <div class="jc-cell"><div class="k">Cycle so far</div><div class="v">${lucyEsc(b.cycleTime||'—')}</div></div>
+      <div class="jc-cell"><div class="k">At this station</div><div class="v ${hot?'hot':''}">${lucyEsc(b.ageAtStation||'—')}</div></div>
+      <div class="jc-cell"><div class="k">Status</div><div class="v">${statusPill}</div></div>
+    </div>
+    <div class="jc-body">
+      <div class="journey">RM <span class="jarrow">→</span>${strip}<span class="jarrow">→</span><div class="jstep ${b.status==='READY'?'done':'pend'}" style="min-width:70px"><span class="op">FG</span></div></div>
+      <div class="tbl-wrap" style="margin-top:16px"><table><thead><tr>
+        <th class="num">Step</th><th>Operation</th><th>Owner / Location</th><th>Zone</th><th>Time logged</th><th>Gap from prev</th><th class="num">Total qty</th><th class="num">Rejected</th>
+      </tr></thead><tbody>${rowsT}</tbody></table></div>
+      <p style="color:var(--muted);font-size:12px;margin-top:12px">"Gap from prev" = time the lot waited between operations. "Cycle so far" = first logged op to latest.</p>
+    </div>
+  </div>`;
+  return `<h3 class="sect no-print">Digital job card</h3>${controls}${sheet}`;
 }
 
-/* ---------- DAILY ---------- */
+/* ====================== DAILY ANALYSIS ====================== */
 function lucyRenderDaily(){
   const D=LUCY_DATA.daily||{}; const days=Object.keys(D.dayTot||{}).sort().reverse();
   if(!lucyDailyDate) lucyDailyDate=days[0]||'';
-  const sel=`<div class="toolbar"><label style="font-size:12px;font-weight:600;color:var(--muted);margin-right:8px">Date</label>
-    <select onchange="lucyDailyDate=this.value;document.getElementById('lpage-daily').innerHTML=lucyRenderDaily()">
+  const sel=`<div class="toolbar">
+    <label style="font-size:12.5px;font-weight:700;color:var(--muted)">Date</label>
+    <select onchange="lucyDailyDate=this.value;lucyRender()">
     ${days.map(d=>`<option value="${d}" ${d===lucyDailyDate?'selected':''}>${d}</option>`).join('')||'<option>no data</option>'}
     </select></div>`;
   const tot=(D.dayTot||{})[lucyDailyDate]||{good:0,rej:0,rew:0,ops:0};
   const sh=(D.shift||{})[lucyDailyDate]||{h12:0,h15:0,h18:0};
   const zones=(D.byDayZone||{})[lucyDailyDate]||{};
   const totMade=tot.good+tot.rej;
-  const yieldPct = totMade>0 ? Math.round(tot.good/totMade*1000)/10 : 100;
-  const rejPct = totMade>0 ? Math.round(tot.rej/totMade*1000)/10 : 0;
+  const yieldPct=totMade>0?Math.round(tot.good/totMade*1000)/10:100;
+  const rejPct=totMade>0?Math.round(tot.rej/totMade*1000)/10:0;
   const kpis=`<div class="kpis">
-    <div class="kpi"><div class="l">Good produced</div><div class="v">${lucyFmt(tot.good)}</div></div>
-    <div class="kpi ${yieldPct<95?'bad':'good'}"><div class="l">First-pass yield</div><div class="v">${yieldPct}%</div></div>
-    <div class="kpi ${tot.rej>0?'bad':''}"><div class="l">Rejected (${rejPct}%)</div><div class="v">${lucyFmt(tot.rej)}</div></div>
-    <div class="kpi"><div class="l">Rework</div><div class="v">${lucyFmt(tot.rew)}</div></div>
+    <div class="kpi"><div class="l">Good produced</div><div class="v num">${lucyFmt(tot.good)}</div><div class="vsub">${tot.ops} entries logged</div></div>
+    <div class="kpi ${yieldPct<95?'bad':'good'}"><div class="l">First-pass yield</div><div class="v num">${yieldPct}%</div><div class="vsub">good ÷ made</div></div>
+    <div class="kpi ${tot.rej>0?'bad':''}"><div class="l">Rejected</div><div class="v num">${lucyFmt(tot.rej)}</div><div class="vsub">${rejPct}% of made</div></div>
+    <div class="kpi"><div class="l">Rework</div><div class="v num">${lucyFmt(tot.rew)}</div><div class="vsub">pieces sent back</div></div>
   </div>`;
-  // shift pacing with deltas
   const d1=sh.h12, d2=sh.h15-sh.h12, d3=sh.h18-sh.h15;
-  const shift=`<h3 class="sect">Shift pacing — good pcs (cumulative · added per block)</h3>
+  const shiftBox=`<h3 class="sect">Shift pacing — good pieces (cumulative · added this block)</h3>
     <div class="slots-strip" style="grid-template-columns:repeat(3,1fr)">
-      <div class="slot-card"><div class="lab">By 12:00</div><div class="qty">${lucyFmt(sh.h12)}</div><div class="sub">+${lucyFmt(d1)} this block</div></div>
-      <div class="slot-card"><div class="lab">By 15:00</div><div class="qty">${lucyFmt(sh.h15)}</div><div class="sub">+${lucyFmt(d2)} this block</div></div>
-      <div class="slot-card"><div class="lab">By 18:00</div><div class="qty">${lucyFmt(sh.h18)}</div><div class="sub">+${lucyFmt(d3)} this block</div></div>
+      <div class="slot-card"><div class="lab">By 12:00 PM</div><div class="qty num">${lucyFmt(sh.h12)}</div><div class="sub">+${lucyFmt(d1)} this block</div></div>
+      <div class="slot-card"><div class="lab">By 3:00 PM</div><div class="qty num">${lucyFmt(sh.h15)}</div><div class="sub">+${lucyFmt(d2)} this block</div></div>
+      <div class="slot-card"><div class="lab">By 6:00 PM</div><div class="qty num">${lucyFmt(sh.h18)}</div><div class="sub">+${lucyFmt(d3)} this block</div></div>
     </div>`;
-  // 7-day trend mini-bars
   const trend=(LUCY_DATA.reports||{}).trend||[];
   const last7=trend.slice(-7);
   const maxT=Math.max(1,...last7.map(t=>t.good));
   const trendBars=last7.map(t=>{
-    const h=Math.round((t.good/maxT)*60)+4;
+    const h=Math.round((t.good/maxT)*70)+6;
     const isSel=t.date===lucyDailyDate;
-    return `<div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex:1">
-      <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">${lucyFmt(t.good)}</div>
-      <div style="width:60%;height:${h}px;background:${isSel?'var(--steel)':'var(--steel-dim)'};border-radius:4px 4px 0 0"></div>
-      <div style="font-size:9.5px;color:var(--dim)">${t.date.slice(5)}</div></div>`;
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1">
+      <div style="font-size:11px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums">${lucyFmt(t.good)}</div>
+      <div style="width:62%;height:${h}px;background:${isSel?'var(--steel)':'var(--steel-dim)'};border-radius:5px 5px 0 0;transition:.2s"></div>
+      <div style="font-size:10px;color:var(--dim);font-weight:600">${t.date.slice(5)}</div></div>`;
   }).join('');
   const trendBox=last7.length?`<h3 class="sect">7-day production trend</h3>
-    <div class="panel"><div style="display:flex;align-items:flex-end;gap:6px;height:90px">${trendBars}</div></div>`:'';
-  // zone table
+    <div class="panel"><div style="display:flex;align-items:flex-end;gap:8px;height:108px">${trendBars}</div></div>`:'';
   const sl=(LUCY_DATA.stationLoad||[]);
   const dayMax=Math.max(1,...sl.map(z=>zones[z.zone]||0));
   const zrows=sl.map(z=>{
     const v=zones[z.zone]||0; const w=Math.round(v/dayMax*100);
     return `<tr><td><b>${lucyEsc(z.zone)}</b></td><td>${lucyEsc(z.loc)}</td>
      <td class="num">${lucyFmt(v)}</td>
-     <td style="width:130px"><div style="background:var(--steel-dim);border-radius:5px;height:8px"><div style="width:${w}%;height:8px;background:var(--steel);border-radius:5px"></div></div></td></tr>`;
+     <td style="width:150px"><div style="background:#eef2f7;border-radius:6px;height:10px"><div style="width:${w}%;height:10px;background:var(--steel);border-radius:6px"></div></div></td></tr>`;
   }).join('');
-  const ztable=`<h3 class="sect">Good pieces by zone (${lucyEsc(lucyDailyDate)})</h3>
+  const ztable=`<h3 class="sect">Good pieces by zone — ${lucyEsc(lucyDailyDate||'—')}</h3>
     <div class="tbl-wrap"><table><thead><tr><th>Zone</th><th>Station / Owner</th><th class="num">Good pcs</th><th></th></tr></thead>
-    <tbody>${zrows||'<tr><td colspan=4 style="color:var(--muted)">No output logged this day.</td></tr>'}</tbody></table></div>`;
-  return sel+kpis+shift+trendBox+ztable;
+    <tbody>${zrows||'<tr><td colspan=4 class="empty">No output logged this day.</td></tr>'}</tbody></table></div>`;
+  return sel+kpis+shiftBox+trendBox+ztable;
 }
 
-/* ---------- REPORTS ---------- */
+/* ====================== REPORTS (with custom date range) ====================== */
+function lucySetRangePreset(p){
+  const t=new Date(); const to=t.toISOString().slice(0,10);
+  let from=to;
+  if(p==='7'){ const d=new Date(t); d.setDate(d.getDate()-6); from=d.toISOString().slice(0,10); }
+  else if(p==='30'){ const d=new Date(t); d.setDate(d.getDate()-29); from=d.toISOString().slice(0,10); }
+  else if(p==='mtd'){ from=to.slice(0,8)+'01'; }
+  lucyRangeFrom=from; lucyRangeTo=to; lucyRangeData=null; lucyRender(); lucyFetchRange();
+}
+function lucyApplyRange(){
+  const f=document.getElementById('lrFrom').value, t=document.getElementById('lrTo').value;
+  if(!f||!t){ return; }
+  lucyRangeFrom=f; lucyRangeTo=t; lucyRangeData=null; lucyRender(); lucyFetchRange();
+}
+function lucyClearRange(){ lucyRangeFrom=''; lucyRangeTo=''; lucyRangeData=null; lucyRender(); }
+function lucyFetchRange(){
+  if(!lucyRangeFrom||!lucyRangeTo) return;
+  lucyRangeLoading=true;
+  fetch(LUCY_API_URL+'?action=range&from='+encodeURIComponent(lucyRangeFrom)+'&to='+encodeURIComponent(lucyRangeTo))
+    .then(r=>r.json()).then(d=>{ lucyRangeData=d; lucyRangeLoading=false; if(lucyActiveTab==='reports') lucyRender(); })
+    .catch(()=>{ lucyRangeLoading=false; lucyRangeData={error:'Cannot reach server. Add the ?action=range handler to Lucy_Backend.gs.'}; if(lucyActiveTab==='reports') lucyRender(); });
+}
 function lucyRenderReports(){
   const R=LUCY_DATA.reports||{}; const S=LUCY_DATA.schedule||[];
-  const pp=R.partProd||[]; const ageing=R.ageing||[]; const trend=R.trend||[];
-  // headline quality
+  const usingRange = !!(lucyRangeFrom&&lucyRangeTo);
+  // pick data source: custom range (if loaded) else life-to-date
+  let pp=R.partProd||[], trend=R.trend||[];
+  let rangeNote='Life-to-date (all logged production).';
+  let rangeBanner='';
+  if(usingRange){
+    if(lucyRangeLoading || !lucyRangeData){
+      rangeBanner=`<div class="lbanner">Loading ${lucyEsc(lucyRangeFrom)} → ${lucyEsc(lucyRangeTo)}…</div>`;
+    } else if(lucyRangeData.error){
+      rangeBanner=`<div class="lbanner alert">${lucyEsc(lucyRangeData.error)}</div>`;
+    } else {
+      pp=(lucyRangeData.reports||{}).partProd||lucyRangeData.partProd||[];
+      trend=(lucyRangeData.reports||{}).trend||lucyRangeData.trend||[];
+      rangeNote=`Showing ${lucyEsc(lucyRangeFrom)} → ${lucyEsc(lucyRangeTo)}.`;
+    }
+  }
+  const ageing=R.ageing||[];
+
   const totGood=pp.reduce((s,x)=>s+x.good,0), totRej=pp.reduce((s,x)=>s+x.rej,0);
-  const made=totGood+totRej; const overallRej= made>0?Math.round(totRej/made*1000)/10:0;
-  const overallYield= made>0?Math.round(totGood/made*1000)/10:100;
-  // delivery risk: parts with a due date, short qty, computed days left
+  const made=totGood+totRej;
+  const overallRej=made>0?Math.round(totRej/made*1000)/10:0;
+  const overallYield=made>0?Math.round(totGood/made*1000)/10:100;
+
   const risk=S.filter(x=>x.custQty!=null && x.gap>0)
     .map(x=>({...x, sev:(x.daysLeft!=null && x.daysLeft<=3)?2:(x.daysLeft!=null&&x.daysLeft<=7?1:0)}))
     .sort((a,b)=>(b.sev-a.sev)||((a.daysLeft??99)-(b.daysLeft??99)));
   const atRisk=risk.length, urgent=risk.filter(x=>x.sev===2).length;
 
-  const kpis=`<div class="kpis">
-    <div class="kpi good"><div class="l">Overall yield</div><div class="v">${overallYield}%</div></div>
-    <div class="kpi ${overallRej>3?'bad':''}"><div class="l">Reject rate</div><div class="v">${overallRej}%</div></div>
-    <div class="kpi ${atRisk?'bad':'good'}"><div class="l">Orders short</div><div class="v">${atRisk}</div></div>
-    <div class="kpi ${urgent?'bad':''}"><div class="l">Urgent (≤3 days)</div><div class="v">${urgent}</div></div>
+  // date range control bar
+  const rangeBar=`<div class="toolbar no-print" style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow)">
+      <span style="font-size:12.5px;font-weight:800;color:var(--ink);letter-spacing:-.01em">Report period</span>
+      <button class="btn-ghost" onclick="lucySetRangePreset('7')">Last 7 days</button>
+      <button class="btn-ghost" onclick="lucySetRangePreset('30')">Last 30 days</button>
+      <button class="btn-ghost" onclick="lucySetRangePreset('mtd')">This month</button>
+      <span style="width:1px;height:24px;background:var(--line2);margin:0 4px"></span>
+      <label style="font-size:12px;font-weight:700;color:var(--muted)">From</label>
+      <input type="date" id="lrFrom" value="${lucyEsc(lucyRangeFrom)}" style="min-width:150px">
+      <label style="font-size:12px;font-weight:700;color:var(--muted)">To</label>
+      <input type="date" id="lrTo" value="${lucyEsc(lucyRangeTo)}" style="min-width:150px">
+      <button class="btn-primary" onclick="lucyApplyRange()">Apply</button>
+      ${usingRange?`<button class="btn-ghost" onclick="lucyClearRange()">Clear → life-to-date</button>`:''}
+      <span style="flex:1"></span>
+      <button class="btn-ghost" onclick="window.print()">⎙ Print / Save PDF</button>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin:8px 2px 0">${rangeNote}</p>`;
+
+  const kpis=`<div class="kpis" style="margin-top:14px">
+    <div class="kpi good"><div class="l">Overall yield</div><div class="v num">${overallYield}%</div><div class="vsub">${lucyFmt(totGood)} good pcs</div></div>
+    <div class="kpi ${overallRej>3?'bad':''}"><div class="l">Reject rate</div><div class="v num">${overallRej}%</div><div class="vsub">${lucyFmt(totRej)} rejected</div></div>
+    <div class="kpi ${atRisk?'bad':'good'}"><div class="l">Orders short</div><div class="v num">${atRisk}</div><div class="vsub">below customer schedule</div></div>
+    <div class="kpi ${urgent?'bad':''}"><div class="l">Urgent (≤3 days)</div><div class="v num">${urgent}</div><div class="vsub">due very soon</div></div>
   </div>`;
 
-  // DELIVERY RISK table
+  // trend chart in-range
+  const last=trend.slice(-30);
+  const maxT=Math.max(1,...last.map(t=>t.good));
+  const showEvery=last.length>14?Math.ceil(last.length/12):1;
+  const tb=last.map((t,i)=>{const h=Math.round(t.good/maxT*80)+6;
+    const lbl=(i%showEvery===0||i===last.length-1)?t.date.slice(5):'';
+    return `<div style="flex:1;min-width:10px;display:flex;flex-direction:column;align-items:center;gap:5px">
+      <div style="width:72%;height:${h}px;background:linear-gradient(180deg,#4d97da,#2f6fb0);border-radius:4px 4px 0 0" title="${t.date}: ${lucyFmt(t.good)} good"></div>
+      <div style="font-size:9.5px;color:var(--dim);font-weight:600;white-space:nowrap">${lbl}</div></div>`;}).join('');
+  const trendBox=last.length?`<h3 class="sect">Production trend</h3><div class="panel"><div style="display:flex;align-items:flex-end;gap:5px;height:118px">${tb}</div></div>`:'';
+
   const riskRows=risk.map(x=>{
     const dl=x.daysLeft;
-    const dlTxt = dl==null?'—':(dl<0?`${Math.abs(dl)}d overdue`:`${dl}d left`);
-    const dlCls = x.sev===2?'pill over':(x.sev===1?'pill track':'pill');
-    return `<tr>
-      <td><b>${lucyEsc(x.code)}</b></td><td>${lucyEsc(x.name)}</td>
+    const dlTxt=dl==null?'—':(dl<0?`${Math.abs(dl)}d overdue`:`${dl}d left`);
+    const dlCls=x.sev===2?'pill over':(x.sev===1?'pill track':'pill nosch');
+    return `<tr><td><b>${lucyEsc(x.code)}</b></td><td>${lucyEsc(x.name)}</td>
       <td class="num">${lucyFmt(x.custQty)}</td><td class="num">${lucyFmt(x.fgReady)}</td>
-      <td class="num leak">${lucyFmt(x.gap)}</td>
-      <td>${lucyEsc(x.due||'—')}</td><td><span class="${dlCls}">${dlTxt}</span></td></tr>`;
+      <td class="num leak">${lucyFmt(x.gap)}</td><td>${lucyEsc(x.due||'—')}</td>
+      <td><span class="${dlCls}">${dlTxt}</span></td></tr>`;
   }).join('');
   const riskTable=`<h3 class="sect">Delivery risk — orders not yet covered by FG</h3>
     <div class="tbl-wrap"><table><thead><tr>
       <th>Code</th><th>Part</th><th class="num">Cust Qty</th><th class="num">FG Ready</th><th class="num">Short</th><th>Due</th><th>Status</th>
-    </tr></thead><tbody>${riskRows||'<tr><td colspan=7 style="color:var(--green)">✓ All scheduled orders are covered by finished goods.</td></tr>'}</tbody></table></div>`;
+    </tr></thead><tbody>${riskRows||'<tr><td colspan=7 style="color:var(--green);font-weight:700">✓ All scheduled orders are covered by finished goods.</td></tr>'}</tbody></table></div>`;
 
-  // PRODUCTION + QUALITY by part
-  const ppRows=pp.map(x=>`<tr>
-     <td><b>${lucyEsc(x.code)}</b></td><td>${lucyEsc(x.name)}</td>
+  const ppRows=pp.map(x=>`<tr><td><b>${lucyEsc(x.code)}</b></td><td>${lucyEsc(x.name)}</td>
      <td class="num">${lucyFmt(x.good)}</td><td class="num">${lucyFmt(x.rej)}</td>
-     <td class="num">${lucyFmt(x.rew)}</td>
-     <td class="num ${x.rejPct>3?'leak':''}">${x.rejPct}%</td></tr>`).join('');
-  const ppTable=`<h3 class="sect">Production &amp; quality by part (life-to-date)</h3>
+     <td class="num">${lucyFmt(x.rew)}</td><td class="num ${x.rejPct>3?'leak':''}">${x.rejPct}%</td></tr>`).join('');
+  const ppTable=`<h3 class="sect">Production &amp; quality by part — ${usingRange?'selected period':'life-to-date'}</h3>
     <div class="tbl-wrap"><table><thead><tr>
       <th>Code</th><th>Part</th><th class="num">Good</th><th class="num">Rejected</th><th class="num">Rework</th><th class="num">Reject %</th>
-    </tr></thead><tbody>${ppRows||'<tr><td colspan=6 style="color:var(--muted)">No production logged yet.</td></tr>'}</tbody></table></div>`;
+    </tr></thead><tbody>${ppRows||'<tr><td colspan=6 class="empty">No production in this period.</td></tr>'}</tbody></table></div>`;
 
-  // WIP AGEING — oldest stuck lots
   const ageRows=ageing.slice(0,12).map(x=>{
     const danger=x.ageMs>2*86400000;
-    return `<tr>
-      <td><b>${lucyEsc(x.batchNo)}</b></td><td>${lucyEsc(x.partName||x.part)}</td>
+    return `<tr><td><b>${lucyEsc(x.batchNo)}</b></td><td>${lucyEsc(x.partName||x.part)}</td>
       <td>${lucyEsc(x.op)}</td><td>${lucyEsc(x.owner||'—')}</td>
-      <td class="num ${danger?'leak':''}">${danger?'<b>':''}${lucyEsc(x.age)}${danger?'</b>':''}</td></tr>`;
+      <td class="num ${danger?'leak':''}">${lucyEsc(x.age)}</td></tr>`;
   }).join('');
   const ageTable=`<h3 class="sect">WIP ageing — lots sitting longest at their station</h3>
     <div class="tbl-wrap"><table><thead><tr>
       <th>Batch</th><th>Part</th><th>Stuck at</th><th>Owner</th><th class="num">Age</th>
-    </tr></thead><tbody>${ageRows||'<tr><td colspan=5 style="color:var(--muted)">No open WIP.</td></tr>'}</tbody></table></div>`;
+    </tr></thead><tbody>${ageRows||'<tr><td colspan=5 class="empty">No open WIP.</td></tr>'}</tbody></table></div>`;
 
-  const printBtn=`<div class="toolbar" style="justify-content:flex-end"><button class="refresh" onclick="window.print()">⎙ Print / Save PDF</button></div>`;
-  return printBtn+kpis+riskTable+ppTable+ageTable;
+  return rangeBar+rangeBanner+kpis+trendBox+riskTable+ppTable+ageTable;
 }
 
-/* ---------- DISPATCH ---------- */
+/* ====================== SCHEDULE & DISPATCH ====================== */
 function lucyRenderDispatch(){
   const S=LUCY_DATA.schedule||[];
   const totCust=S.reduce((s,x)=>s+(+x.custQty||0),0);
   const totFg=S.reduce((s,x)=>s+(+x.fgReady||0),0);
   const gaps=S.filter(x=>x.gap>0).length;
   const kpis=`<div class="kpis">
-    <div class="kpi"><div class="l">Customer scheduled</div><div class="v">${lucyFmt(totCust)}</div></div>
-    <div class="kpi"><div class="l">FG ready</div><div class="v">${lucyFmt(totFg)}</div></div>
-    <div class="kpi ${(totCust-totFg)>0?'bad':''}"><div class="l">Gap to schedule</div><div class="v">${lucyFmt(Math.max(0,totCust-totFg))}</div></div>
-    <div class="kpi ${gaps?'bad':''}"><div class="l">Parts short</div><div class="v">${gaps}</div></div>
+    <div class="kpi"><div class="l">Customer scheduled</div><div class="v num">${lucyFmt(totCust)}</div><div class="vsub">total ordered</div></div>
+    <div class="kpi"><div class="l">FG ready</div><div class="v num">${lucyFmt(totFg)}</div><div class="vsub">finished pieces</div></div>
+    <div class="kpi ${(totCust-totFg)>0?'bad':''}"><div class="l">Gap to schedule</div><div class="v num">${lucyFmt(Math.max(0,totCust-totFg))}</div><div class="vsub">still to make</div></div>
+    <div class="kpi ${gaps?'bad':''}"><div class="l">Parts short</div><div class="v num">${gaps}</div><div class="vsub">below schedule</div></div>
   </div>`;
   const rows=S.map(x=>`<tr><td><b>${lucyEsc(x.code)}</b></td><td>${lucyEsc(x.name)}</td>
     <td class="num">${x.custQty!=null?lucyFmt(x.custQty):'—'}</td>
     <td>${lucyEsc(x.due||'—')}</td>
     <td class="num">${lucyFmt(x.fgReady)}</td>
     <td class="num ${x.gap>0?'leak':''}">${x.gap!=null?lucyFmt(x.gap):'—'}</td>
-    <td style="font-size:11.5px;color:var(--muted)">${lucyEsc(x.note)}</td></tr>`).join('');
+    <td style="font-size:12px;color:var(--muted)">${lucyEsc(x.note)}</td></tr>`).join('');
   return kpis+`<h3 class="sect">Customer schedule vs FG ready</h3>
     <div class="tbl-wrap"><table><thead><tr>
      <th>Code</th><th>Part</th><th class="num">Cust Sched</th><th>Due</th><th class="num">FG Ready</th><th class="num">Gap</th><th>Revision Note</th>
-    </tr></thead><tbody>${rows||'<tr><td colspan=7>No schedule rows.</td></tr>'}</tbody></table></div>
-    <p style="color:var(--muted);font-size:12px;margin-top:10px">FG Ready = good pieces logged at each part's final operation. Edit schedule in the SCHEDULE sheet; this recomputes the gap.</p>`;
+    </tr></thead><tbody>${rows||'<tr><td colspan=7 class="empty">No schedule rows.</td></tr>'}</tbody></table></div>
+    <p style="color:var(--muted);font-size:12px;margin-top:12px">FG Ready = good pieces logged at each part's final operation. Edit the SCHEDULE sheet to change targets.</p>`;
 }
-
 </script>
 </body>
 </html>
