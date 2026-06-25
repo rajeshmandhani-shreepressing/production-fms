@@ -96,6 +96,7 @@ button{font-family:inherit;cursor:pointer}
 #lucyApp .l-side{width:248px;background:linear-gradient(185deg,#16263d 0%,#152741 100%);color:#cdd9e6;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:30;border-right:1px solid rgba(255,255,255,.06)}
 #lucyApp .l-side .head{padding:22px 20px 20px;border-bottom:1px solid rgba(255,255,255,.07)}
 #lucyApp .l-side .head .mark{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#3b86d6,#1f5a96);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;margin-bottom:13px;box-shadow:0 6px 16px rgba(47,111,176,.35);font-family:var(--display)}
+#lucyApp .l-side .head .mark.sp-mark-img{background:var(--sp-logo-mark) no-repeat center/contain;box-shadow:none;border-radius:0}
 #lucyApp .l-side .head b{color:#fff;font-size:15.5px;font-weight:800;display:block;font-family:var(--display);letter-spacing:-.2px}
 #lucyApp .l-side .head span{font-size:11.5px;color:#8298b3;font-weight:500}
 #lucyApp .l-side nav{flex:1;padding:14px 12px;overflow-y:auto}
@@ -138,6 +139,59 @@ button{font-family:inherit;cursor:pointer}
 #lucyApp .kpi.bad .v{color:var(--red)}
 #lucyApp .kpi.good .v{color:var(--green)}
 #lucyApp .kpi .vsub{font-size:11.5px;color:var(--dim);font-weight:600;margin-top:5px}
+
+/* ----- Magnet-style KPI (icon chip, clickable) ----- */
+#lucyApp .kpi.ov{padding:18px 20px}
+#lucyApp .kpi.ov::after{display:none}
+#lucyApp .kpi.ov .top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+#lucyApp .kpi.ov .lbl{font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);font-weight:700;line-height:1.3}
+#lucyApp .kpi.ov .ico{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+#lucyApp .kpi.ov .val{font-size:32px;font-weight:800;line-height:1;letter-spacing:-.03em}
+#lucyApp .kpi.ov .sub{font-size:11.5px;color:var(--muted);margin-top:8px;font-weight:600}
+#lucyApp .kpi.click{cursor:pointer;transition:.16s}
+#lucyApp .kpi.click:hover{border-color:var(--steel);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+#lucyApp .kpi.click.open{border-color:var(--steel);box-shadow:0 0 0 3px var(--steel-dim)}
+#lucyApp .kpi.click .hint{font-size:10.5px;color:var(--steel);font-weight:700;margin-top:9px;opacity:0;transition:.16s}
+#lucyApp .kpi.click:hover .hint,#lucyApp .kpi.click.open .hint{opacity:1}
+#lucyApp .ic-steel{background:var(--steel-dim);color:var(--steel)}
+#lucyApp .ic-green{background:var(--green-dim);color:var(--green)}
+#lucyApp .ic-amber{background:var(--amber-dim);color:var(--amber)}
+#lucyApp .ic-red{background:var(--red-dim);color:var(--red)}
+#lucyApp .ic-violet{background:#efeaf7;color:var(--violet)}
+#lucyApp .ic-teal{background:#e2f4f4;color:var(--teal)}
+#lucyApp .v-steel{color:var(--steel)}#lucyApp .v-green{color:var(--green)}#lucyApp .v-amber{color:var(--amber)}#lucyApp .v-red{color:var(--red)}
+
+/* ----- WIP drilldown panel (expands under the KPI grid) ----- */
+#lucyApp .drill{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin-top:16px;overflow:hidden;animation:lfade .22s ease}
+#lucyApp .drill-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;background:linear-gradient(100deg,#16263d,#23456e);color:#fff}
+#lucyApp .drill-head h4{font-family:var(--display);font-size:15px;font-weight:800;margin:0}
+#lucyApp .drill-head .dsub{font-size:12px;color:#9fbbd9;margin-top:2px}
+#lucyApp .drill-head button{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:8px;padding:7px 13px;font-size:12.5px;font-weight:700;cursor:pointer;transition:.14s}
+#lucyApp .drill-head button:hover{background:rgba(255,255,255,.26)}
+#lucyApp .drill-body{padding:6px 20px 18px}
+
+/* stage cards inside drilldown */
+#lucyApp .stage-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:14px}
+#lucyApp .stage-card{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--surface2)}
+#lucyApp .stage-card .sc-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 15px;background:var(--surface);border-bottom:1px solid var(--line)}
+#lucyApp .stage-card .sc-op{font-weight:800;font-size:14px;letter-spacing:-.01em}
+#lucyApp .stage-card .sc-zone{font-size:11px;color:var(--muted);font-weight:600;margin-top:2px}
+#lucyApp .stage-card .sc-count{text-align:right}
+#lucyApp .stage-card .sc-count .n{font-size:22px;font-weight:800;line-height:1;color:var(--steel-deep);font-variant-numeric:tabular-nums}
+#lucyApp .stage-card .sc-count .nl{font-size:10px;color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+#lucyApp .stage-card .sc-body{padding:10px 15px}
+#lucyApp .stage-card .sc-stat{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding:3px 0}
+#lucyApp .stage-card .sc-stat b{color:var(--ink);font-variant-numeric:tabular-nums}
+#lucyApp .stage-card .sc-parts{margin-top:8px;display:flex;flex-direction:column;gap:5px}
+#lucyApp .stage-card .sc-part{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:5px 9px;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+#lucyApp .stage-card .sc-part .pn{font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+#lucyApp .stage-card .sc-part .pq{font-weight:700;color:var(--steel-deep);font-variant-numeric:tabular-nums;flex-shrink:0;margin-left:8px}
+#lucyApp .stage-card.empty-stage{opacity:.55}
+#lucyApp .drill-empty{padding:26px;text-align:center;color:var(--muted);font-size:13.5px}
+
+/* chart container */
+#lucyApp .chartbox{position:relative;height:240px;width:100%}
+#lucyApp .chartbox.sm{height:200px}
 
 #lucyApp .panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);margin-top:16px}
 
@@ -514,8 +568,8 @@ td.num,th.num{font-family:var(--mono);text-align:right}
  <div class="layout">
   <aside class="l-side">
     <div class="head">
-      <div class="mark">L</div>
-      <b>Shree Pressing</b><span>LUCY Cell Dashboard</span>
+      <div class="mark sp-mark-img"></div>
+      <b>Shree Pressing</b><span>Lucy Cell Dashboard</span>
     </div>
     <nav>
       <div class="grp">Monitor</div>
@@ -2155,6 +2209,7 @@ const LUCY_API_URL = "https://script.google.com/macros/s/AKfycbzwIRyjkq5Jflsd7yf
 
 let LUCY_DATA=null, lucyTimer=null, lucyActiveTab='board', lucyJobBatch='', lucyDailyDate='';
 let lucyRangeFrom='', lucyRangeTo='', lucyRangeData=null, lucyRangeLoading=false;
+let lucyDrillKey='';   // which Overview KPI drilldown is open ('','open','leak','ready','stage')
 function lucyTeardown(){ if(lucyTimer){clearInterval(lucyTimer);lucyTimer=null;} document.getElementById('lucyApp').style.display='none'; }
 function bootLucy(){
   document.getElementById('portal').style.display='none';
@@ -2168,6 +2223,7 @@ function bootLucy(){
 function lucyTab(btn){
   document.querySelectorAll('#lucyApp .l-side nav button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active'); lucyActiveTab=btn.dataset.ltab;
+  lucyDrillKey='';   // close any open WIP drilldown when leaving the board
   const t={board:['Live Board','Every open batch — where it is, next station, leaks'],
            jobcard:['Digital Job Card','Search any batch — full status, who started it & when, every step live'],
            daily:['Daily Analysis','Day-wise output by zone, shift and totals'],
@@ -2193,12 +2249,99 @@ function lucyLoad(silent){
       const typing = ae && ae.closest && ae.closest('#lucyApp') && (ae.tagName==='INPUT'||ae.tagName==='SELECT');
       if(typing) return;                     // skip this cycle, data is stored for next render
       if(lucyActiveTab==='reports') return;  // reports stays put unless user acts
+      if(lucyActiveTab==='board' && lucyDrillKey) return;  // don't collapse an open WIP drilldown
+      if(lucyActiveTab==='daily') return;    // avoid chart flicker; refreshes on user action
     }
     lucyRender();
   }).catch(()=>{ if(!silent) document.getElementById('lucyLoading').innerHTML='Cannot reach LUCY server. Check LUCY_API_URL / deployment.'; });
 }
 function lucyEsc(s){return (s==null?'':String(s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 function lucyFmt(n){n=Number(n||0);return n.toLocaleString('en-IN');}
+
+/* ---- Chart.js production trend (good vs rejected) ---- */
+let lucyCharts={};
+function lucyDrawTrend(canvasId, data){
+  const cv=document.getElementById(canvasId); if(!cv || typeof Chart==='undefined') return;
+  if(lucyCharts[canvasId]){ lucyCharts[canvasId].destroy(); }
+  const labels=data.map(d=>d.date.slice(5));
+  const good=data.map(d=>d.good), rej=data.map(d=>d.rej||0);
+  lucyCharts[canvasId]=new Chart(cv.getContext('2d'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Good',data:good,borderColor:'#2f6fb0',backgroundColor:'rgba(47,111,176,.12)',fill:true,tension:.35,borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#2f6fb0',pointHoverRadius:5},
+      {label:'Rejected',data:rej,borderColor:'#d4392f',backgroundColor:'rgba(212,57,47,.08)',fill:true,tension:.35,borderWidth:2,pointRadius:2,pointBackgroundColor:'#d4392f',pointHoverRadius:5}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:true,position:'top',align:'end',labels:{boxWidth:12,boxHeight:12,font:{family:"'Inter',sans-serif",size:12,weight:'600'},color:'#5b6b80',padding:14}},
+        tooltip:{backgroundColor:'#16263d',titleFont:{family:"'Inter',sans-serif",weight:'700'},bodyFont:{family:"'Inter',sans-serif"},padding:10,cornerRadius:8,callbacks:{label:c=>c.dataset.label+': '+Number(c.raw).toLocaleString('en-IN')}}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{family:"'Inter',sans-serif",size:11},color:'#8a98ab'}},
+        y:{beginAtZero:true,grid:{color:'#eef2f7'},ticks:{font:{family:"'Inter',sans-serif",size:11},color:'#8a98ab',callback:v=>Number(v).toLocaleString('en-IN')}}
+      }}
+  });
+}
+
+/* ---- Reports print (self-contained popup, like the Magnet report) ---- */
+function lucyPrintReport(){
+  const esc=s=>(s==null?'':String(s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const fmt=n=>Number(n||0).toLocaleString('en-IN');
+  const R=LUCY_DATA.reports||{}, S=LUCY_DATA.schedule||[];
+  const usingRange=!!(lucyRangeFrom&&lucyRangeTo);
+  let pp=R.partProd||[], trend=R.trend||[], periodLabel='Life-to-date';
+  if(usingRange && lucyRangeData && !lucyRangeData.error){
+    pp=(lucyRangeData.reports||{}).partProd||lucyRangeData.partProd||pp;
+    trend=(lucyRangeData.reports||{}).trend||lucyRangeData.trend||trend;
+    periodLabel=lucyRangeFrom+' → '+lucyRangeTo;
+  }
+  const totGood=pp.reduce((s,x)=>s+x.good,0), totRej=pp.reduce((s,x)=>s+x.rej,0), made=totGood+totRej;
+  const yield_=made>0?Math.round(totGood/made*1000)/10:100, rejRate=made>0?Math.round(totRej/made*1000)/10:0;
+  const risk=S.filter(x=>x.custQty!=null&&x.gap>0).sort((a,b)=>((a.daysLeft??99)-(b.daysLeft??99)));
+  const ageing=(R.ageing||[]).slice(0,15);
+
+  const ppRows=pp.map(x=>`<tr><td><b>${esc(x.code)}</b></td><td>${esc(x.name)}</td>
+     <td style="text-align:right">${fmt(x.good)}</td><td style="text-align:right">${fmt(x.rej)}</td>
+     <td style="text-align:right">${fmt(x.rew)}</td><td style="text-align:right">${x.rejPct}%</td></tr>`).join('')||'<tr><td colspan=6 style="color:#777">No production in this period.</td></tr>';
+  const riskRows=risk.map(x=>{const dl=x.daysLeft;const dt=dl==null?'—':(dl<0?Math.abs(dl)+'d overdue':dl+'d left');
+    return `<tr><td><b>${esc(x.code)}</b></td><td>${esc(x.name)}</td><td style="text-align:right">${fmt(x.custQty)}</td>
+      <td style="text-align:right">${fmt(x.fgReady)}</td><td style="text-align:right">${fmt(x.gap)}</td><td>${esc(x.due||'—')}</td><td>${dt}</td></tr>`;}).join('')||'<tr><td colspan=7 style="color:#1f9d57">All scheduled orders covered by FG.</td></tr>';
+  const ageRows=ageing.map(x=>`<tr><td><b>${esc(x.batchNo)}</b></td><td>${esc(x.partName||x.part)}</td>
+     <td>${esc(x.op)}</td><td>${esc(x.owner||'—')}</td><td style="text-align:right">${esc(x.age)}</td></tr>`).join('')||'<tr><td colspan=5 style="color:#777">No open WIP.</td></tr>';
+
+  const html=`<!doctype html><html><head><meta charset="utf-8"><title>Lucy Cell Report — ${esc(periodLabel)}</title>
+  <style>
+    *{box-sizing:border-box} body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1a2533;margin:26px}
+    .band{background:#16263d;color:#fff;padding:18px 22px;border-radius:10px;margin-bottom:18px}
+    .band h1{margin:0;font-size:20px;font-weight:800}.band p{margin:4px 0 0;color:#9fbbd9;font-size:13px}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+    .kpi{border:1px solid #d6dbe2;border-radius:9px;padding:13px 15px}.kpi .l{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#8a98ab;font-weight:700}.kpi .v{font-size:24px;font-weight:800;margin-top:5px}
+    h2{font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:#5b6b80;margin:22px 0 8px;border-bottom:2px solid #2f6fb0;padding-bottom:5px}
+    table{border-collapse:collapse;width:100%;font-size:12.5px;margin-bottom:8px}
+    th,td{border:1px solid #d6dbe2;padding:7px 9px;text-align:left}
+    th{background:#16263d;color:#fff;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+    tr:nth-child(even) td{background:#f6f8fa}
+    .print-btn{position:fixed;top:14px;right:14px;background:#2f6fb0;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:700;cursor:pointer}
+    @media print{.print-btn{display:none}}
+  </style></head><body>
+  <button class="print-btn" onclick="window.print()">🖶 Print / Save PDF</button>
+  <div class="band"><h1>Shree Pressing — Lucy Cell Production Report</h1>
+    <p>Period: <b style="color:#fff">${esc(periodLabel)}</b> · Generated ${new Date().toLocaleString()}</p></div>
+  <div class="kpis">
+    <div class="kpi"><div class="l">Overall yield</div><div class="v" style="color:#1f9d57">${yield_}%</div></div>
+    <div class="kpi"><div class="l">Reject rate</div><div class="v" style="color:${rejRate>3?'#d4392f':'#1a2533'}">${rejRate}%</div></div>
+    <div class="kpi"><div class="l">Good produced</div><div class="v">${fmt(totGood)}</div></div>
+    <div class="kpi"><div class="l">Orders short</div><div class="v" style="color:${risk.length?'#d4392f':'#1f9d57'}">${risk.length}</div></div>
+  </div>
+  <h2>Delivery risk — orders not yet covered by FG</h2>
+  <table><thead><tr><th>Code</th><th>Part</th><th style="text-align:right">Cust Qty</th><th style="text-align:right">FG Ready</th><th style="text-align:right">Short</th><th>Due</th><th>Status</th></tr></thead><tbody>${riskRows}</tbody></table>
+  <h2>Production &amp; quality by part</h2>
+  <table><thead><tr><th>Code</th><th>Part</th><th style="text-align:right">Good</th><th style="text-align:right">Rejected</th><th style="text-align:right">Rework</th><th style="text-align:right">Reject %</th></tr></thead><tbody>${ppRows}</tbody></table>
+  <h2>WIP ageing — lots sitting longest</h2>
+  <table><thead><tr><th>Batch</th><th>Part</th><th>Stuck at</th><th>Owner</th><th style="text-align:right">Age</th></tr></thead><tbody>${ageRows}</tbody></table>
+  </body></html>`;
+  const w=window.open('','_blank');
+  if(!w){ alert('Allow pop-ups to print the report.'); return; }
+  w.document.write(html); w.document.close();
+}
 
 function lucyRender(){
   if(!LUCY_DATA)return;
@@ -2214,19 +2357,57 @@ function lucyRender(){
 
 /* ---------- LIVE BOARD ---------- */
 /* ====================== LIVE BOARD ====================== */
+/* ====================== WIP BY STAGE (computation) ====================== */
+function lucyWipByStage(){
+  // Build a map: stage key (zone||op) -> {op, zone, batches:[], pieces}
+  // Pieces = good pcs reached at the batch's CURRENT op (what's physically sitting there).
+  const B=(LUCY_DATA.board||[]).filter(x=>x.status!=='READY'&&x.status!=='CLOSED');
+  const stages={}; const order=[];
+  B.forEach(x=>{
+    const op=x.currentOp||'—', zone=x.zone||'—';
+    const key=zone+'||'+op;
+    if(!stages[key]){ stages[key]={op,zone,owner:x.owner||'',batches:[],pieces:0,parts:{}}; order.push(key); }
+    const s=stages[key];
+    s.batches.push(x);
+    const pcs=+x.goodAtCurrent||0;
+    s.pieces+=pcs;
+    const pk=x.part||x.partName||'—';
+    if(!s.parts[pk]) s.parts[pk]={name:x.partName||x.part,code:x.part,pieces:0,count:0};
+    s.parts[pk].pieces+=pcs; s.parts[pk].count+=1;
+  });
+  // also surface routed stages with zero WIP so the floor sees the full route
+  const list=order.map(k=>stages[k]).sort((a,b)=>b.pieces-a.pieces);
+  return list;
+}
+
+/* ====================== LIVE BOARD ====================== */
 function lucyRenderBoard(){
   const B=LUCY_DATA.board||[];
   const open  = B.filter(x=>x.status!=='READY'&&x.status!=='CLOSED');
   const leaks = B.filter(x=>x.status==='LEAK');
   const ready = B.filter(x=>x.status==='READY');
   const totLeak=B.reduce((s,x)=>s+(+x.wipLeak||0),0);
+  const wip=lucyWipByStage();
+  const stageCount=wip.length;
+  const wipPieces=wip.reduce((s,x)=>s+x.pieces,0);
 
-  const kpis=`<div class="kpis">
-    <div class="kpi"><div class="l">Open batches</div><div class="v num">${open.length}</div><div class="vsub">live on the floor</div></div>
-    <div class="kpi ${leaks.length?'bad':'good'}"><div class="l">Batches leaking</div><div class="v num">${leaks.length}</div><div class="vsub">${leaks.length?'pieces unaccounted':'all reconciled'}</div></div>
-    <div class="kpi ${ready.length?'good':''}"><div class="l">Ready to dispatch</div><div class="v num">${ready.length}</div><div class="vsub">finished goods</div></div>
-    <div class="kpi ${totLeak>0?'bad':''}"><div class="l">Total unaccounted</div><div class="v num">${lucyFmt(totLeak)}</div><div class="vsub">pieces across batches</div></div>
-  </div>`;
+  // Magnet-style KPI cards (clickable -> open the stage drilldown)
+  const cards=[
+    {c:'steel', i:'▦', l:'Open Batches',      v:open.length,         s:'live on the floor',                drill:'open'},
+    {c:leaks.length?'red':'green', i:leaks.length?'⚠':'✓', l:'Batches Leaking', v:leaks.length, s:leaks.length?'pieces unaccounted':'all reconciled', drill:'leak'},
+    {c:'green', i:'✓', l:'Ready To Dispatch', v:ready.length,        s:'finished goods',                   drill:'ready'},
+    {c:totLeak>0?'red':'steel', i:'∑', l:'Total Unaccounted', v:lucyFmt(totLeak), s:'pieces across batches', drill:'leak'},
+    {c:'violet', i:'▥', l:'WIP By Stage',     v:stageCount,          s:lucyFmt(wipPieces)+' pcs in progress', drill:'stage'},
+  ];
+  const kpis=`<div class="kpis">${cards.map(c=>`
+    <div class="kpi ov click ${lucyDrillKey===c.drill?'open':''}" onclick="lucyDrill('${c.drill}')">
+      <div class="top"><div class="lbl">${c.l}</div><div class="ico ic-${c.c}">${c.i}</div></div>
+      <div class="val num v-${c.c}">${c.v}</div>
+      <div class="sub">${c.s}</div>
+      <div class="hint">${lucyDrillKey===c.drill?'▴ click to close':'▾ click to break down'}</div>
+    </div>`).join('')}</div>`;
+
+  const drill = lucyDrillKey ? lucyRenderDrill(lucyDrillKey) : '';
 
   const bn=LUCY_DATA.bottleneck;
   const bnBanner = bn ? `<div class="lbanner">⚠ Bottleneck right now — <b>${lucyEsc(bn.loc)}</b> has ${bn.open} batch${bn.open>1?'es':''} waiting. Clear this station first.</div>` : '';
@@ -2236,7 +2417,7 @@ function lucyRenderBoard(){
   const rank={'LEAK':0,'Moving':1,'Not started':2,'READY':3,'CLOSED':4};
   const order=[...B].sort((a,b)=>(rank[a.status]??9)-(rank[b.status]??9));
 
-  const cards=order.map(x=>{
+  const pcards=order.map(x=>{
     const cls = x.status==='LEAK'?'s-leak':x.status==='READY'?'s-ready':'s-moving';
     const strip=x.stages.map((s,i)=>{
       const next=x.stages[i+1];
@@ -2267,12 +2448,121 @@ function lucyRenderBoard(){
        <div class="journey">${strip}</div>
      </div>`;
   }).join('');
-  return kpis+bnBanner+`<div class="pcards">${cards}</div>`;
+  return kpis+drill+bnBanner+`<div class="pcards">${pcards}</div>`;
+}
+
+/* toggle the drilldown under the KPI row */
+function lucyDrill(key){ lucyDrillKey = (lucyDrillKey===key)? '' : key; lucyRender(); }
+
+function lucyRenderDrill(key){
+  const B=LUCY_DATA.board||[];
+  if(key==='stage'){
+    const wip=lucyWipByStage();
+    if(!wip.length) return `<div class="drill"><div class="drill-head"><div><h4>WIP by stage</h4><div class="dsub">Where every open batch is sitting right now</div></div><button onclick="lucyDrill('stage')">✕ Close</button></div><div class="drill-empty">No work in progress — every batch is finished or not started.</div></div>`;
+    const cardsHtml=wip.map(s=>{
+      const parts=Object.values(s.parts).sort((a,b)=>b.pieces-a.pieces);
+      const partRows=parts.map(p=>`<div class="sc-part"><span class="pn" title="${lucyEsc(p.name)}">${lucyEsc(p.name||p.code)}</span><span class="pq">${lucyFmt(p.pieces)}</span></div>`).join('');
+      return `<div class="stage-card">
+        <div class="sc-top">
+          <div><div class="sc-op">${lucyEsc(s.op)}</div><div class="sc-zone">${lucyEsc(s.zone)}${s.owner?(' · '+lucyEsc(s.owner)):''}</div></div>
+          <div class="sc-count"><div class="n">${s.batches.length}</div><div class="nl">batch${s.batches.length>1?'es':''}</div></div>
+        </div>
+        <div class="sc-body">
+          <div class="sc-stat"><span>Pieces sitting here</span><b>${lucyFmt(s.pieces)}</b></div>
+          <div class="sc-stat"><span>Distinct parts</span><b>${parts.length}</b></div>
+          <div class="sc-parts">${partRows}</div>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="drill">
+      <div class="drill-head"><div><h4>WIP by stage — ${wip.length} active station${wip.length>1?'s':''}</h4><div class="dsub">For each operation: how many batches, total pieces, and which parts</div></div><button onclick="lucyDrill('stage')">✕ Close</button></div>
+      <div class="drill-body"><div class="stage-grid">${cardsHtml}</div></div>
+    </div>`;
+  }
+  // open / leak / ready -> a focused batch table
+  let rows=[], title='', sub='';
+  if(key==='open'){ rows=B.filter(x=>x.status!=='READY'&&x.status!=='CLOSED'); title='All open batches'; sub='Every lot currently on the floor'; }
+  else if(key==='leak'){ rows=B.filter(x=>x.status==='LEAK'); title='Leaking batches'; sub='Pieces unaccounted between operations'; }
+  else if(key==='ready'){ rows=B.filter(x=>x.status==='READY'); title='Ready to dispatch'; sub='Finished goods waiting to ship'; }
+  const drillTitle={open:'open',leak:'leak',ready:'ready'}[key];
+  if(!rows.length) return `<div class="drill"><div class="drill-head"><div><h4>${title}</h4><div class="dsub">${sub}</div></div><button onclick="lucyDrill('${drillTitle}')">✕ Close</button></div><div class="drill-empty">Nothing here right now.</div></div>`;
+  const body=rows.map(x=>`<tr>
+     <td><b>${lucyEsc(x.batchNo)}</b></td>
+     <td>${lucyEsc(x.partName||x.part)} <span style="color:var(--dim)">(${lucyEsc(x.part)})</span></td>
+     <td>${lucyEsc(x.currentOp)} <span style="color:var(--dim)">/ ${lucyEsc(x.zone)}</span></td>
+     <td>${lucyEsc(x.owner||'—')}</td>
+     <td class="num">${lucyFmt(x.goodAtCurrent)}</td>
+     <td class="num ${x.wipLeak>0?'leak':''}">${x.wipLeak>0?lucyFmt(x.wipLeak):'—'}</td>
+     <td>${x.ageAtStation?lucyEsc(x.ageAtStation):'—'}</td></tr>`).join('');
+  return `<div class="drill">
+    <div class="drill-head"><div><h4>${title} — ${rows.length}</h4><div class="dsub">${sub}</div></div><button onclick="lucyDrill('${drillTitle}')">✕ Close</button></div>
+    <div class="drill-body"><div class="tbl-wrap" style="margin-top:14px;box-shadow:none"><table><thead><tr>
+      <th>Batch</th><th>Part</th><th>At stage</th><th>Owner</th><th class="num">Pcs here</th><th class="num">Unaccounted</th><th>Age</th>
+    </tr></thead><tbody>${body}</tbody></table></div></div>
+  </div>`;
 }
 
 /* ====================== DIGITAL JOB CARD (print-ready) ====================== */
 function lucyJobSearch(v){ lucyJobBatch=(v||'').trim(); lucyRender(); }
-function lucyPrintJobCard(){ window.print(); }
+function lucyPrintJobCard(){
+  const B=LUCY_DATA.board||[]; let b=null;
+  if(lucyJobBatch){ const q=lucyJobBatch.toLowerCase();
+    b=B.find(x=>x.batchNo.toLowerCase()===q)||B.find(x=>x.batchNo.toLowerCase().indexOf(q)>=0); }
+  if(!b) b=B[0]||null;
+  if(!b){ alert('No batch selected to print.'); return; }
+  const esc=s=>(s==null?'':String(s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const fmt=n=>Number(n||0).toLocaleString('en-IN');
+  const rows=b.stages.map(s=>{
+    const st=s.current?'HERE NOW':(s.good>0?'done':'pending');
+    return `<tr${s.current?' style="background:#e7f0f9"':''}>
+      <td style="text-align:center">${s.step}</td><td><b>${esc(s.op)}</b></td>
+      <td>${esc(s.loc)}</td><td>${esc(s.zone)}</td>
+      <td>${esc(st)}</td><td>${s.ts?esc(s.ts):'—'}</td><td>${s.gap?('+'+esc(s.gap)):'—'}</td>
+      <td style="text-align:right">${s.good>0?fmt(s.good):'—'}</td>
+      <td style="text-align:right">${s.rejected>0?fmt(s.rejected):'—'}</td></tr>`;
+  }).join('');
+  const created=(b.createdAt||b.createdBy)?`${esc(b.createdAt||b.startDate)}${b.createdBy?(' · '+esc(b.createdBy)):''}`:(b.startDate?esc(b.startDate):'—');
+  const html=`<!doctype html><html><head><meta charset="utf-8"><title>Job Card — ${esc(b.batchNo)}</title>
+  <style>
+    *{box-sizing:border-box} body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1a2533;margin:26px}
+    .band{background:#16263d;color:#fff;padding:18px 22px;border-radius:10px;display:flex;justify-content:space-between;align-items:flex-start}
+    .band .co{font-size:18px;font-weight:800}.band .co span{display:block;font-size:11px;color:#9fbbd9;letter-spacing:1px;text-transform:uppercase;margin-top:3px}
+    .band .bn{font-size:22px;font-weight:800;text-align:right}.band .bn span{display:block;font-size:11px;color:#9fbbd9;margin-top:2px}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#d6dbe2;border:1px solid #d6dbe2;margin:16px 0;border-radius:8px;overflow:hidden}
+    .cell{background:#fff;padding:11px 14px}.cell .k{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#8a98ab;font-weight:700}.cell .v{font-size:14px;font-weight:700;margin-top:3px}
+    table{border-collapse:collapse;width:100%;margin-top:10px;font-size:12.5px}
+    th,td{border:1px solid #d6dbe2;padding:7px 9px;text-align:left}
+    th{background:#16263d;color:#fff;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+    tr:nth-child(even) td{background:#f6f8fa}
+    .ft{margin-top:14px;font-size:11px;color:#777}
+    .print-btn{position:fixed;top:14px;right:14px;background:#2f6fb0;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:700;cursor:pointer}
+    @media print{.print-btn{display:none}}
+  </style></head><body>
+  <button class="print-btn" onclick="window.print()">🖶 Print / Save PDF</button>
+  <div class="band"><div class="co">SHREE PRESSING<span>Lucy Cell · Production Job Card</span></div>
+    <div class="bn">${esc(b.batchNo)}<span>${esc(LUCY_DATA.generated||new Date().toLocaleString())}</span></div></div>
+  <div class="grid">
+    <div class="cell"><div class="k">Part</div><div class="v">${esc(b.partName||b.part)}</div></div>
+    <div class="cell"><div class="k">Part code</div><div class="v">${esc(b.part)}</div></div>
+    <div class="cell"><div class="k">Batch qty</div><div class="v">${fmt(b.qty)}</div></div>
+    <div class="cell"><div class="k">RM grade &amp; size</div><div class="v">${esc(b.rm||'—')}</div></div>
+    <div class="cell"><div class="k">Started</div><div class="v">${created}</div></div>
+    <div class="cell"><div class="k">Now at</div><div class="v">${esc(b.currentOp)} (${esc(b.zone)})</div></div>
+    <div class="cell"><div class="k">Owner</div><div class="v">${esc(b.owner||'—')}</div></div>
+    <div class="cell"><div class="k">Next station</div><div class="v">${esc(b.nextStation)}</div></div>
+    <div class="cell"><div class="k">Cycle so far</div><div class="v">${esc(b.cycleTime||'—')}</div></div>
+    <div class="cell"><div class="k">At this station</div><div class="v">${esc(b.ageAtStation||'—')}</div></div>
+    <div class="cell"><div class="k">Status</div><div class="v">${esc(b.status)}</div></div>
+    <div class="cell"><div class="k">Unaccounted</div><div class="v">${b.wipLeak>0?fmt(b.wipLeak)+' pcs':'—'}</div></div>
+  </div>
+  <table><thead><tr><th>Step</th><th>Operation</th><th>Owner / Location</th><th>Zone</th><th>State</th><th>Time logged</th><th>Gap</th><th style="text-align:right">Total qty</th><th style="text-align:right">Rejected</th></tr></thead>
+  <tbody>${rows}</tbody></table>
+  <p class="ft">"Gap" = time waited between operations. "Cycle so far" = first logged op to latest. Generated from the live Lucy Cell FMS.</p>
+  </body></html>`;
+  const w=window.open('','_blank');
+  if(!w){ alert('Allow pop-ups to print the job card.'); return; }
+  w.document.write(html); w.document.close();
+}
 function lucyRenderJobcard(){
   const B=LUCY_DATA.board||[];
   let b=null;
@@ -2377,17 +2667,9 @@ function lucyRenderDaily(){
     </div>`;
   const trend=(LUCY_DATA.reports||{}).trend||[];
   const last7=trend.slice(-7);
-  const maxT=Math.max(1,...last7.map(t=>t.good));
-  const trendBars=last7.map(t=>{
-    const h=Math.round((t.good/maxT)*70)+6;
-    const isSel=t.date===lucyDailyDate;
-    return `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1">
-      <div style="font-size:11px;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums">${lucyFmt(t.good)}</div>
-      <div style="width:62%;height:${h}px;background:${isSel?'var(--steel)':'var(--steel-dim)'};border-radius:5px 5px 0 0;transition:.2s"></div>
-      <div style="font-size:10px;color:var(--dim);font-weight:600">${t.date.slice(5)}</div></div>`;
-  }).join('');
   const trendBox=last7.length?`<h3 class="sect">7-day production trend</h3>
-    <div class="panel"><div style="display:flex;align-items:flex-end;gap:8px;height:108px">${trendBars}</div></div>`:'';
+    <div class="panel"><div class="chartbox sm"><canvas id="lucyDailyTrend"></canvas></div></div>`:'';
+  if(last7.length) setTimeout(()=>lucyDrawTrend('lucyDailyTrend', last7), 30);
   const sl=(LUCY_DATA.stationLoad||[]);
   const dayMax=Math.max(1,...sl.map(z=>zones[z.zone]||0));
   const zrows=sl.map(z=>{
@@ -2468,7 +2750,7 @@ function lucyRenderReports(){
       <button class="btn-primary" onclick="lucyApplyRange()">Apply</button>
       ${usingRange?`<button class="btn-ghost" onclick="lucyClearRange()">Clear → life-to-date</button>`:''}
       <span style="flex:1"></span>
-      <button class="btn-ghost" onclick="window.print()">⎙ Print / Save PDF</button>
+      <button class="btn-ghost" onclick="lucyPrintReport()">⎙ Print / Save PDF</button>
     </div>
     <p style="font-size:12px;color:var(--muted);margin:8px 2px 0">${rangeNote}</p>`;
 
@@ -2481,14 +2763,10 @@ function lucyRenderReports(){
 
   // trend chart in-range
   const last=trend.slice(-30);
-  const maxT=Math.max(1,...last.map(t=>t.good));
-  const showEvery=last.length>14?Math.ceil(last.length/12):1;
-  const tb=last.map((t,i)=>{const h=Math.round(t.good/maxT*80)+6;
-    const lbl=(i%showEvery===0||i===last.length-1)?t.date.slice(5):'';
-    return `<div style="flex:1;min-width:10px;display:flex;flex-direction:column;align-items:center;gap:5px">
-      <div style="width:72%;height:${h}px;background:linear-gradient(180deg,#4d97da,#2f6fb0);border-radius:4px 4px 0 0" title="${t.date}: ${lucyFmt(t.good)} good"></div>
-      <div style="font-size:9.5px;color:var(--dim);font-weight:600;white-space:nowrap">${lbl}</div></div>`;}).join('');
-  const trendBox=last.length?`<h3 class="sect">Production trend</h3><div class="panel"><div style="display:flex;align-items:flex-end;gap:5px;height:118px">${tb}</div></div>`:'';
+  const trendBox=last.length?`<h3 class="sect">Production trend — good vs rejected (last ${last.length} days)</h3>
+    <div class="panel"><div class="chartbox"><canvas id="lucyTrendChart"></canvas></div></div>`:'';
+  // draw after innerHTML is in the DOM
+  if(last.length) setTimeout(()=>lucyDrawTrend('lucyTrendChart', last), 30);
 
   const riskRows=risk.map(x=>{
     const dl=x.daysLeft;
